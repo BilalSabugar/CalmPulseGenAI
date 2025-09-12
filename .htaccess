@@ -1,0 +1,17 @@
+# SPA fallback for React/Expo web
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # If the request is for an existing file or folder, serve it
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Otherwise, serve index.html (let the client router handle it)
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Optional: force HTTPS (keep if you already do this elsewhere)
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
