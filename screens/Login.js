@@ -77,41 +77,42 @@ export default function Login() {
   const progress = useRef(new Animated.Value(0)).current;
 
   const handleLogin = async (emailID, password) => {
-    const auth = getAuth();
-    setErrorMsg('');
-    setSubmitting(true);
-    try {
-      await signInWithEmailAndPassword(auth, emailID.trim().toLowerCase(), password);
+    // const auth = getAuth();
+    // setErrorMsg('');
+    // setSubmitting(true);
+    // try {
+    //   await signInWithEmailAndPassword(auth, emailID.trim().toLowerCase(), password);
 
-      if (remember) {
-        await AsyncStorage.setItem('isAutoLogin', 'true');
-      } else {
-        await AsyncStorage.setItem('isAutoLogin', 'false');
-      }
-      await AsyncStorage.setItem('isLogedIn', 'true'); // keep original key to avoid breaking
-      await AsyncStorage.setItem('email', `${emailID.trim()}`);
-      await AsyncStorage.setItem('password', `${password}`);
+    //   if (remember) {
+    //     await AsyncStorage.setItem('isAutoLogin', 'true');
+    //   } else {
+    //     await AsyncStorage.setItem('isAutoLogin', 'false');
+    //   }
+    //   await AsyncStorage.setItem('isLogedIn', 'true'); // keep original key to avoid breaking
+    //   await AsyncStorage.setItem('email', `${emailID.trim()}`);
+    //   await AsyncStorage.setItem('password', `${password}`);
 
-      try {
-        await addAlert(emailID, {
-          type: 'security',
-          title: 'New sign-in',
-          body: 'You signed in on a new session.',
-        });
-      } catch {}
+    //   try {
+    //     await addAlert(emailID, {
+    //       type: 'security',
+    //       title: 'New sign-in',
+    //       body: 'You signed in on a new session.',
+    //     });
+    //   } catch {}
 
-      const go = (await isAdmin(emailID.trim().toLowerCase())) ? 'Admin' : 'Homescreen';
-      navigation.reset({ index: 0, routes: [{ name: go }] });
-    } catch (error) {
-      setErrorMsg(
-        (error?.code || '').includes('auth')
-          ? 'Invalid email or password. Please try again.'
-          : 'Unable to sign in at the moment. Please try again.',
-      );
-      setAuthing(false);
-    } finally {
-      setSubmitting(false);
-    }
+    //   const go = (await isAdmin(emailID.trim().toLowerCase())) ? 'Admin' : 'Homescreen';
+    //   navigation.reset({ index: 0, routes: [{ name: go }] });
+    // } catch (error) {
+    //   setErrorMsg(
+    //     (error?.code || '').includes('auth')
+    //       ? 'Invalid email or password. Please try again.'
+    //       : 'Unable to sign in at the moment. Please try again.',
+    //   );
+    //   setAuthing(false);
+    // } finally {
+    //   setSubmitting(false);
+    // }
+    navigation.reset({ index: 0, routes: [{ name: "Homescreen" }] });
   };
 
   const startAuthAnim = () => {
@@ -196,9 +197,9 @@ export default function Login() {
           <View style={{ gap: 12 }}>
             <View style={s.logoRow}>
               <View style={s.logoBox}>
-                <Text style={s.logo}>I A S & Co.</Text>
+                <Text style={s.logo}>Calm Pulse</Text>
               </View>
-              <Text style={s.logoSub}>Chartered Accountants</Text>
+              <Text style={s.logoSub}>Your private AI companion</Text>
             </View>
 
             <Text style={s.title}>Welcome Back!</Text>

@@ -15,14 +15,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
-
-// ---------------------------------------------
-// Calm Pulse AI — Welcome Page (React Native)
-// - Orientation rule: desktop layout if width > height (as per user's preference)
-// - Theme toggle: light / dark / system with persistence (AsyncStorage)
-// - No external UI kit required; pure React Native styles
-// - Anchor links replaced with programmatic scrollTo sections
-// ---------------------------------------------
+import { useNavigation } from '@react-navigation/native';
 
 type ThemeChoice = 'light' | 'dark' | 'system';
 export default function CalmPulseWelcomePageRN() {
@@ -33,6 +26,7 @@ export default function CalmPulseWelcomePageRN() {
   const isDesktop = width > height; // orientation-based rule
   const isDark = themeChoice === 'dark' || (themeChoice === 'system' && systemColorScheme === 'dark');
 
+  const navigation = useNavigation()
   // Persist + bootstrap theme
   useEffect(() => {
     (async () => {
@@ -80,6 +74,10 @@ export default function CalmPulseWelcomePageRN() {
   const safetyRef = useRef<View | null>(null);
   const toolboxRef = useRef<View | null>(null);
   const instRef = useRef<View | null>(null);
+
+  const goToLogin=()=>{
+    navigation.navigate('Login');
+  }
 
   const scrollTo = (ref: React.RefObject<View | null>) => {
     if (!scrollRef.current || !ref.current) return;
@@ -136,7 +134,7 @@ export default function CalmPulseWelcomePageRN() {
             <HeaderLink label="Safety" onPress={() => scrollTo(safetyRef)} color={C.link} />
             <HeaderLink label="Toolbox" onPress={() => scrollTo(toolboxRef)} color={C.link} />
             <HeaderLink label="For Institutions" onPress={() => scrollTo(instRef)} color={C.link} />
-            <PrimaryButton label="Start Chat" onPress={() => { }} />
+            <PrimaryButton label="Start Chat" onPress={() => { goToLogin() }} />
             <ThemeSwitchRN choice={themeChoice} setChoice={setThemeChoice} isDark={isDark} />
           </View>
         ) : (

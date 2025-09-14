@@ -263,8 +263,8 @@ export default function Register() {
           <View style={{ gap: 12 }}>
             {/* Header */}
             <View style={s.logoRow}>
-              <View style={s.logoBox}><Text style={s.logo}>IAS & Co.</Text></View>
-              <Text style={s.logoSub}>Chartered Accountants</Text>
+              <View style={s.logoBox}><Text style={s.logo}>Calm Pulse AI</Text></View>
+              <Text style={s.logoSub}>Your private AI companion</Text>
             </View>
             <Text style={s.title}>Create your account</Text>
             <Text style={s.sub}>We’ll take just a few steps.</Text>
@@ -316,9 +316,9 @@ export default function Register() {
             {/* STEP 2: KYC-lite & Address */}
             {step === 2 && (
               <>
-                <LabeledInput icon="hash" placeholder="GST number (optional)" value={gst} onChangeText={setGst} />
-                <LabeledInput icon="credit-card" placeholder="PAN number (optional)" value={pan} onChangeText={setPan} />
-                <LabeledInput icon="map-pin" placeholder="Address (optional)" value={address} onChangeText={setAddress} multiline />
+                <LabeledInput icon="hash" placeholder="Question 1" value={gst} onChangeText={setGst} />
+                <LabeledInput icon="hash" placeholder="Question 2" value={pan} onChangeText={setPan} />
+                <LabeledInput icon="hash" placeholder="Question 3" value={address} onChangeText={setAddress} multiline />
                 <Text style={s.disclaimer}>
                   By signing up you agree to our{' '}
                   <Text style={s.linkTxt} onPress={() => navigation.navigate('Privacy')}>Terms and Conditions</Text>
