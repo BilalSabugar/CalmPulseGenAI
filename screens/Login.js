@@ -1,373 +1,355 @@
-// ================================
-// File: screens/Login.jsx
-// Description: Animated login (original effects) + centralized contact info
-// ================================
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+// screens/Login.js
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
-  Dimensions,
-  Platform,
   Animated,
-  Easing,
-  Modal,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Feather } from '@expo/vector-icons';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addAlert } from '../utils/addAlert';
 import { useNavigation } from '@react-navigation/native';
-import { WebsiteName, width } from '../components/constants';
-import isAdmin from '../utils/isAdmin';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, AntDesign } from '@expo/vector-icons';
 
-// ✅ centralized contact (for the small help line at bottom)
-import { contact } from '../src/content';
-
-const { width: W, height: H } = Dimensions.get('window');
+import { useThemeMode } from '../components/theme/ThemeProvider';
+import { useTheme } from '../components/theme/theme';
 
 export default function Login() {
-  // form state (UI only)
+  const nav = useNavigation();
+  const { isDark } = useThemeMode();
+
+  // Pull tokens (with safe fallbacks)
+  const theme = useTheme?.() ?? {};
+  const color = theme.color ?? {};
+  const type = theme.type ?? {};
+  const elevation = theme.elevation ?? {};
+  const spacing = theme.spacing ?? {};
+  const radius = theme.radius ?? {};
+
+  // spacing/radius fallbacks so missing keys never crash
+  const S = {
+    xs: spacing.xs ?? 6,
+    sm: spacing.sm ?? 8,
+    md: spacing.md ?? 12,
+    lg: spacing.lg ?? 16,
+    xl: spacing.xl ?? 24,
+  };
+  const R = {
+    lg: radius.lg ?? 16,
+    xl: radius.xl ?? 20,
+    '2xl': radius['2xl'] ?? 24,
+  };
+  const SHADOW_CARD =
+    elevation.card ?? {
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 6 },
+      ...(Platform.OS === 'android' ? { elevation: 6 } : null),
+    };
+
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+
+  // entrance + glow
+  const fade = useRef(new Animated.Value(0)).current;
+  const y = useRef(new Animated.Value(16)).current;
+  const glow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.scrollTo(0, 0);
-    }
-  }, []);
-
-  // decorative animated blobs (same as your original)
-  const blob1 = useRef(new Animated.Value(0)).current;
-  const blob2 = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const anim = (v, d) =>
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fade, { toValue: 1, duration: 420, useNativeDriver: true }),
+        Animated.timing(y, { toValue: 0, duration: 420, useNativeDriver: true }),
+      ]),
       Animated.loop(
         Animated.sequence([
-          Animated.timing(v, { toValue: 1, duration: d, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-          Animated.timing(v, { toValue: 0, duration: d, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        ]),
-      ).start();
-    anim(blob1, 6000);
-    anim(blob2, 8400);
-  }, [blob1, blob2]);
+          Animated.timing(glow, { toValue: 1, duration: 1800, useNativeDriver: false }),
+          Animated.timing(glow, { toValue: 0, duration: 1800, useNativeDriver: false }),
+        ])
+      ),
+    ]).start();
+  }, [fade, y, glow]);
 
-  const b1Scale = blob1.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] });
-  const b2Scale = blob2.interpolate({ inputRange: [0, 1], outputRange: [1.1, 0.9] });
-
-  // Secure overlay animation when Sign In pressed
-  const [authing, setAuthing] = useState(false);
-  const [stepIdx, setStepIdx] = useState(0);
-  const steps = useMemo(
-    () => ['Encrypting session…', 'Verifying credentials…', 'Securely connecting…', 'Finalizing…'],
-    [],
-  );
-
-  const lockScale = useRef(new Animated.Value(1)).current;
-  const ringPulse = useRef(new Animated.Value(0)).current;
-  const progress = useRef(new Animated.Value(0)).current;
-
-  const handleLogin = async (emailID, password) => {
-    // const auth = getAuth();
-    // setErrorMsg('');
-    // setSubmitting(true);
-    // try {
-    //   await signInWithEmailAndPassword(auth, emailID.trim().toLowerCase(), password);
-
-    //   if (remember) {
-    //     await AsyncStorage.setItem('isAutoLogin', 'true');
-    //   } else {
-    //     await AsyncStorage.setItem('isAutoLogin', 'false');
-    //   }
-    //   await AsyncStorage.setItem('isLogedIn', 'true'); // keep original key to avoid breaking
-    //   await AsyncStorage.setItem('email', `${emailID.trim()}`);
-    //   await AsyncStorage.setItem('password', `${password}`);
-
-    //   try {
-    //     await addAlert(emailID, {
-    //       type: 'security',
-    //       title: 'New sign-in',
-    //       body: 'You signed in on a new session.',
-    //     });
-    //   } catch {}
-
-    //   const go = (await isAdmin(emailID.trim().toLowerCase())) ? 'Admin' : 'Homescreen';
-    //   navigation.reset({ index: 0, routes: [{ name: go }] });
-    // } catch (error) {
-    //   setErrorMsg(
-    //     (error?.code || '').includes('auth')
-    //       ? 'Invalid email or password. Please try again.'
-    //       : 'Unable to sign in at the moment. Please try again.',
-    //   );
-    //   setAuthing(false);
-    // } finally {
-    //   setSubmitting(false);
-    // }
-    navigation.reset({ index: 0, routes: [{ name: "Homescreen" }] });
+  const handleLogin = () => {
+    if (loading) return;
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      nav.navigate('Homescreen');
+    }, 2000);
   };
 
-  const startAuthAnim = () => {
-    if (submitting) return;
-    setAuthing(true);
-    setStepIdx(0);
-    progress.setValue(0);
-    ringPulse.setValue(0);
-    lockScale.setValue(1);
+  const styles = StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: isDark ? '#0b1220' : '#eef2ff',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: S.lg,
+    },
+    arcs: {
+      position: 'absolute',
+      top: 0, left: 0, right: 0, bottom: 0,
+      borderTopLeftRadius: 9999,
+      borderTopRightRadius: 9999,
+      opacity: isDark ? 0.06 : 0.12,
+      borderWidth: 1,
+      borderColor: isDark ? '#4b5563' : '#93c5fd',
+    },
+    cardWrap: {
+      width: 360,
+      maxWidth: '92%',
+      alignSelf: 'center',
+    },
+    glow: {
+      position: 'absolute',
+      alignSelf: 'center',
+      width: 360,
+      height: 180,
+      top: -28,
+      borderRadius: 180,
+      backgroundColor: isDark ? '#6366f1' : '#93c5fd',
+      ...(Platform.OS === 'web' ? { filter: 'blur(48px)' } : null),
+    },
+    card: {
+      borderRadius: R['2xl'],
+      padding: S.xl,
+      paddingTop: S.lg,
+      backgroundColor: isDark ? 'rgba(2,6,23,0.65)' : 'rgba(255,255,255,0.75)',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
+      ...SHADOW_CARD,
+      ...(Platform.OS === 'web' ? { backdropFilter: 'blur(12px)' } : null),
+    },
+    logoBadge: {
+      alignSelf: 'center',
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: S.md,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.9)',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    title: {
+      ...(type.h4 ?? { fontSize: 20, fontWeight: '700' }),
+      textAlign: 'center',
+      color: color.text ?? (isDark ? '#e5e7eb' : '#0f172a'),
+    },
+    sub: {
+      ...(type.body ?? { fontSize: 13 }),
+      textAlign: 'center',
+      marginTop: S.xs,
+      marginBottom: S.lg,
+      lineHeight: 20,
+      color: color.textMuted ?? (isDark ? '#93a2bf' : '#64748b'),
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
+      backgroundColor: isDark ? 'rgba(2,6,23,0.5)' : 'rgba(241,245,249,0.7)',
+      paddingHorizontal: 12,
+      height: 44,
+      marginTop: S.sm,
+    },
+    input: {
+      flex: 1,
+      ...(type.input ?? { fontSize: 14 }),
+      color: color.text ?? (isDark ? '#e5e7eb' : '#0f172a'),
+    },
+    rowBetween: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: S.sm,
+      marginBottom: S.sm,
+    },
+    link: {
+      ...(type.caption ?? { fontSize: 12 }),
+      fontWeight: '600',
+      color: color.link ?? '#2563eb',
+    },
+    cta: {
+      height: 48,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: S.md,
+      backgroundColor: '#111827',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.2)',
+      shadowColor: '#000',
+      shadowOpacity: 0.15,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 6 },
+    },
+    ctaText: { color: '#fff', fontWeight: '700', letterSpacing: 0.2 },
+    divider: {
+      marginTop: S.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rule: {
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.12)',
+    },
+    dividerText: {
+      ...(type.caption ?? { fontSize: 12 }),
+      marginHorizontal: 8,
+      color: color.textMuted ?? (isDark ? '#93a2bf' : '#64748b'),
+    },
+    socialRow: {
+      marginTop: S.md,
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    socialBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? 'rgba(2,6,23,0.6)' : 'rgba(255,255,255,0.9)',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+      marginHorizontal: 6,
+    },
+  });
 
-    // pulse ring loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(ringPulse, { toValue: 1, duration: 1000, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(ringPulse, { toValue: 0, duration: 1000, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-      ]),
-    ).start();
-
-    // lock gentle breathing
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(lockScale, { toValue: 1.08, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(lockScale, { toValue: 1.0, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ]),
-    ).start();
-
-    // staged progress + messages
-    let i = 0;
-    const tick = () => {
-      i += 1;
-      setStepIdx(Math.min(i, steps.length - 1));
-      Animated.timing(progress, {
-        toValue: (i + 1) / steps.length,
-        duration: 650,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }).start();
-
-      if (i < steps.length - 1) {
-        setTimeout(tick, 800);
-      } else {
-        setTimeout(async () => {
-          await handleLogin(email, pw);
-        }, 700);
-      }
-    };
-    setTimeout(tick, 300);
-  };
-
-  const ringScale = ringPulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] });
-  const ringOpacity = ringPulse.interpolate({ inputRange: [0, 1], outputRange: [0.22, 0] });
-
-  const canSubmit = email.trim().length > 3 && pw.length >= 6;
+  // Animated opacity for glow (cannot live inside StyleSheet)
+  const glowOpacity = glow.interpolate
+    ? glow.interpolate({ inputRange: [0, 1], outputRange: [0.06, 0.18] })
+    : 0.12;
 
   return (
-    <View style={s.wrap}>
-      {/* Background gradient */}
+    <View style={styles.root}>
       <LinearGradient
-        colors={['#020617', '#0b1220', '#020617']}
-        start={{ x: 0.1, y: 0.1 }}
-        end={{ x: 0.9, y: 1 }}
+        colors={isDark ? ['#0b1220', '#0b1220', '#0f172a'] : ['#e6f0ff', '#eaf6ff', '#ffffff']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
+      <View pointerEvents="none" style={styles.arcs} />
 
-      {/* Animated blobs */}
-      <Animated.View style={[s.blob, { top: H * 0.1, left: -80, transform: [{ scale: b1Scale }] }]} />
-      <Animated.View style={[s.blob2, { bottom: -60, right: -60, transform: [{ scale: b2Scale }] }]} />
-
-      {/* Decorative grid lines (subtle) */}
-      <View pointerEvents="none" style={s.grid}>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <View key={`v-${i}`} style={[s.gridLine, { left: (i + 1) * (W / 12) }]} />
-        ))}
-        {Array.from({ length: 14 }).map((_, i) => (
-          <View key={`h-${i}`} style={[s.gridLine, { top: (i + 1) * (H / 18), width: '100%', height: 1 }]} />
-        ))}
-      </View>
-
-      {/* Glass Card */}
-      <View style={s.center}>
-        <BlurView intensity={Platform.OS === 'ios' ? 40 : 60} tint="dark" style={s.card}>
-          <View style={{ gap: 12 }}>
-            <View style={s.logoRow}>
-              <View style={s.logoBox}>
-                <Text style={s.logo}>Calm Pulse</Text>
-              </View>
-              <Text style={s.logoSub}>Your private AI companion</Text>
-            </View>
-
-            <Text style={s.title}>Welcome Back!</Text>
-            <Text style={s.sub}>Secure access to your workspace. Please sign in with your credentials.</Text>
-
-            {/* Email */}
-            <View style={s.inputWrap}>
-              <Feather name="mail" size={16} color="#93c5fd" />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Email address"
-                placeholderTextColor="#8b9bb2"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={s.input}
-                autoCorrect={false}
-                autoComplete="email"
-                textContentType="username"
-              />
-            </View>
-
-            {/* Password */}
-            <View style={s.inputWrap}>
-              <Feather name="lock" size={16} color="#93c5fd" />
-              <TextInput
-                value={pw}
-                onChangeText={setPw}
-                placeholder="Password"
-                placeholderTextColor="#8b9bb2"
-                secureTextEntry={!showPw}
-                style={s.input}
-                autoCorrect={false}
-                autoComplete="password"
-                textContentType="password"
-              />
-              <TouchableOpacity onPress={() => setShowPw(v => !v)} style={{ paddingLeft: 6 }}>
-                <Feather name={showPw ? 'eye' : 'eye-off'} size={16} color="#8b9bb2" />
-              </TouchableOpacity>
-            </View>
-
-            {errorMsg ? <Text style={s.error}>{errorMsg}</Text> : null}
-
-            {/* Remember + Forgot */}
-            <View style={s.rowBetween}>
-              <TouchableOpacity onPress={() => setRemember(!remember)} style={s.chk} activeOpacity={0.8}>
-                <View style={[s.box, remember && s.boxOn]} />
-                <Text style={s.chkTxt}>Remember me</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                <Text style={s.linkTxt}>Forgot password?</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Sign In */}
-            <TouchableOpacity
-              disabled={!canSubmit || submitting}
-              onPress={startAuthAnim}
-              activeOpacity={0.9}
-              style={[s.btn, (!canSubmit || submitting) && { opacity: 0.5 }]}
-            >
-              <Feather name="shield" size={16} color="#0b1220" />
-              <Text style={s.btnTxt}>{submitting ? 'Please wait…' : 'Sign In'}</Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={s.hr} />
-            <Text style={s.small}>
-              New here? <Text style={s.linkTxt} onPress={() => navigation.navigate('Register')}>Create an account</Text>
-            </Text>
-
-            {/* 🔗 Help line (centralized contact; safe + neutral) */}
-            <Text style={[s.small, { marginTop: 8 }]}>
-              Need help? Email <Text style={s.linkTxt}>{contact.email}</Text> or call {contact.phone}.
-            </Text>
+      <Animated.View style={[styles.cardWrap, { opacity: fade, transform: [{ translateY: y }] }]}>
+        <Animated.View style={[styles.glow, { opacity: glowOpacity }]} />
+        <View style={styles.card}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="log-in-outline" size={20} color={isDark ? '#e5e7eb' : '#111827'} />
           </View>
-        </BlurView>
-      </View>
 
-      {/* Secure Authentication Overlay (Modal to ensure RN Web accessibility) */}
-      <Modal visible={authing} animationType="fade" transparent onRequestClose={() => {}}>
-        <View style={s.overlay}>
-          <Animated.View style={[s.pulseRing, { transform: [{ scale: ringScale }], opacity: ringOpacity }]} />
-          <Animated.View style={[s.lockWrap, { transform: [{ scale: lockScale }] }]}>
-            <Feather name="lock" size={28} color="#0b1220" />
-          </Animated.View>
+          <Text style={styles.title}>Sign in with email</Text>
+          <Text style={styles.sub}>
+            Make a new doc to bring your words, data, and teams together. For free
+          </Text>
 
-          <View style={s.authCard}>
-            <Text style={s.authHdr}>Securing your session</Text>
-            <Text style={s.authStep}>{steps[stepIdx]}</Text>
+          {/* Email */}
+          <View style={styles.inputRow}>
+            <Ionicons
+              name="mail-outline"
+              size={16}
+              color={isDark ? '#a8b3cf' : '#64748b'}
+              style={{ marginRight: 8 }}
+            />
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
+              placeholderTextColor={isDark ? '#8A94A7' : '#94A3B8'}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-            {/* Progress bar */}
-            <View style={s.bar}>
-              <Animated.View
-                style={[
-                  s.barFill,
-                  { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
-                ]}
+          {/* Password */}
+          <View style={styles.inputRow}>
+            <Ionicons
+              name="lock-closed-outline"
+              size={16}
+              color={isDark ? '#a8b3cf' : '#64748b'}
+              style={{ marginRight: 8 }}
+            />
+            <TextInput
+              value={pw}
+              onChangeText={setPw}
+              placeholder="Password"
+              placeholderTextColor={isDark ? '#8A94A7' : '#94A3B8'}
+              style={styles.input}
+              secureTextEntry={!showPw}
+              autoCapitalize="none"
+            />
+            <Pressable onPress={() => setShowPw(s => !s)} hitSlop={8} style={{ padding: 4 }}>
+              <Ionicons
+                name={showPw ? 'eye-off-outline' : 'eye-outline'}
+                size={18}
+                color={isDark ? '#a8b3cf' : '#64748b'}
               />
-            </View>
+            </Pressable>
+          </View>
 
-            <Text style={s.authFine}>AES-256 | TLS 1.3 | Zero-trust</Text>
+          <View style={styles.rowBetween}>
+            <View />
+            <Pressable onPress={() => nav.navigate('ForgotPassword')}>
+              <Text style={styles.link}>Forgot password?</Text>
+            </Pressable>
+          </View>
+
+          <Pressable
+            onPress={handleLogin}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.cta,
+              pressed && { transform: [{ translateY: 1 }] },
+              loading && { opacity: 0.9 },
+            ]}
+          >
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.ctaText}>Login</Text>}
+          </Pressable>
+          <Pressable
+            onPress={() => nav.navigate('Register')}
+            disabled={loading}
+            style={[styles.cta, { backgroundColor: "transparent", marginTop: S.sm, shadowOpacity: 0 }]}
+          >
+            <Text style={[styles.ctaText, { color: "#000  " }]}>Register</Text>
+          </Pressable>
+
+          <View style={styles.divider}>
+            <View style={styles.rule} />
+            <Text style={styles.dividerText}>Or sign in with</Text>
+            <View style={styles.rule} />
+          </View>
+
+          <View style={styles.socialRow}>
+            <Pressable style={styles.socialBtn}>
+              <AntDesign name="google" size={18} color={isDark ? '#e5e7eb' : '#111827'} />
+            </Pressable>
+            <Pressable style={styles.socialBtn}>
+              <AntDesign name="facebook-square" size={18} color={isDark ? '#e5e7eb' : '#111827'} />
+            </Pressable>
+            <Pressable style={styles.socialBtn}>
+              <AntDesign name="apple1" size={18} color={isDark ? '#e5e7eb' : '#111827'} />
+            </Pressable>
           </View>
         </View>
-      </Modal>
+      </Animated.View>
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: '#0b1220', maxWidth: width, overflow: 'hidden' },
-
-  blob: {
-    position: 'absolute', width: 280, height: 280, borderRadius: 200,
-    backgroundColor: '#22d3ee', opacity: 0.08,
-  },
-  blob2: {
-    position: 'absolute', width: 320, height: 320, borderRadius: 220,
-    backgroundColor: '#a855f7', opacity: 0.06,
-  },
-
-  grid: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: 0.06 },
-  gridLine: { position: 'absolute', width: 1, height: '100%', backgroundColor: '#93c5fd' },
-
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 18 },
-  card: {
-    width: '100%', maxWidth: 960, borderRadius: 24, padding: 18, borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.25)', overflow: 'hidden',
-  },
-
-  logoRow: { flexDirection: 'column', alignItems: 'flex-start' },
-  logoBox: { backgroundColor: '#0b1220' },
-  logo: { color: '#e5e7eb', fontSize: 24, fontWeight: '900' },
-  logoSub: { color: '#93c5fd', opacity: 0.8 },
-
-  title: { color: '#e5e7eb', fontSize: 26, fontWeight: '500', marginTop: 10 },
-  sub: { color: '#bcd0ea' },
-
-  inputWrap: {
-    marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderWidth: 1, borderColor: 'rgba(148,163,184,0.35)', backgroundColor: 'rgba(2, 6, 23, 0.5)',
-    borderRadius: 12, paddingHorizontal: 12, height: 44,
-  },
-  input: { flex: 1, color: '#e5e7eb', paddingHorizontal: 15, backgroundColor: 'rgb(2, 6, 23)', width: '100%', height: '100%' },
-
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 },
-  chk: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  box: { width: 16, height: 16, borderRadius: 4, borderWidth: 1, borderColor: '#93c5fd' },
-  boxOn: { backgroundColor: '#93c5fd' },
-  chkTxt: { color: '#d1d5db' },
-  linkTxt: { color: '#93c5fd', textDecorationLine: 'underline' },
-
-  btn: { marginTop: 14, backgroundColor: '#22d3ee', height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  btnTxt: { color: '#0b1220', fontWeight: '800', fontSize: 15, letterSpacing: 0.2 },
-
-  hr: { height: 1, backgroundColor: 'rgba(148,163,184,0.25)', marginTop: 16 },
-  small: { color: '#9fb2cc', marginTop: 10 },
-  error: { color: '#fecaca', marginTop: 8 },
-
-  /* overlay */
-  overlay: { flex: 1, backgroundColor: 'rgba(2,6,23,0.65)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
-  pulseRing: { position: 'absolute', width: 160, height: 160, borderRadius: 80, backgroundColor: '#22d3ee' },
-  lockWrap: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#22d3ee', alignItems: 'center', justifyContent: 'center', borderWidth: 6, borderColor: 'rgba(2,6,23,0.6)' },
-  authCard: { marginTop: 16, width: '100%', maxWidth: 420, backgroundColor: 'rgba(2,6,23,0.6)', borderWidth: 1, borderColor: 'rgba(148,163,184,0.25)', borderRadius: 14, padding: 14 },
-  authHdr: { color: '#e5e7eb', fontWeight: '800', fontSize: 14 },
-  authStep: { color: '#cbd5e1', marginTop: 6 },
-  bar: { height: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#0b1220', marginTop: 12 },
-  barFill: { height: '100%', backgroundColor: '#22d3ee' },
-  authFine: { color: '#7aa2d2', marginTop: 10, fontSize: 12 },
-});

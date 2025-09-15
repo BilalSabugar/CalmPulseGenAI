@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Polyline, Circle, G } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -32,6 +33,8 @@ export default function CalmPulseHome() {
   const [breatheOpen, setBreatheOpen] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
   const [ventMode, setVentMode] = useState(false);
+
+  const navigation = useNavigation();
 
   const user = { nickname: 'SkyWalker', streak: getStreakSync() };
 
@@ -163,6 +166,10 @@ export default function CalmPulseHome() {
     scrollRef.current?.scrollTo({ y, animated: true });
   }
 
+  const handleOpenChat = () => {
+    navigation.navigate('ChatScreen');
+  }
+
   
   // Render
   
@@ -181,7 +188,7 @@ export default function CalmPulseHome() {
             </View>
           </View>
           <View style={[S.row, { gap: 8 }]}>
-            <APressable onPress={() => scrollToId('chat')} style={[S.primaryBtn, { backgroundColor: palette.primary }]}>
+            <APressable onPress={() => handleOpenChat()} style={[S.primaryBtn, { backgroundColor: palette.primary }]}>
               <Text style={S.primaryBtnText}>Continue Chat</Text>
             </APressable>
             <ThemeSwitch theme={theme} setTheme={setTheme} palette={palette} />
@@ -319,7 +326,7 @@ export default function CalmPulseHome() {
 
       {/* Floating buttons */}
       <View style={[S.fabs]}>
-        <APressable onPress={() => scrollToId('chat')} style={[S.fab, { backgroundColor: palette.primary }]}>
+        <APressable onPress={() =>  handleOpenChat()} style={[S.fab, { backgroundColor: palette.primary }]}>
           <Text style={S.fabText}>💬 Chat</Text>
         </APressable>
         <APressable style={[S.fab, { backgroundColor: '#f43f5e' }]}>

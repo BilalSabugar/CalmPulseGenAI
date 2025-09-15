@@ -410,7 +410,7 @@ function ChipSolid({ label, onPress, isDark }: { label: string; onPress: () => v
 function ChipOutline({ label, onPress, isDark }: { label: string; onPress: () => void; isDark: boolean }) {
   return (
     <Pressable onPress={onPress} style={[S.chip, { backgroundColor: 'transparent', borderColor: isDark ? '#334155' : '#cbd5e1' }]}>
-      <Text style={[S.tiny]}>{label}</Text>
+      <Text style={[S.tiny,{color:isDark?"#FFF":"#000"}]}>{label}</Text>
     </Pressable>
   );
 }
