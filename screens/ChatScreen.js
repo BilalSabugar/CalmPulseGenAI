@@ -52,7 +52,7 @@ class Bubble extends React.PureComponent {
 }
 
 // --- Intro Overlay Component ---
-function IntroOverlay({ palette, showIntro, onHide }) {
+function IntroOverlay({ palette, showIntro, onHide, PillAlert }) {
   const overlayOpacity = useRef(new Animated.Value(1)).current;
   const overlayTranslateY = useRef(new Animated.Value(0)).current;
 
@@ -80,8 +80,8 @@ function IntroOverlay({ palette, showIntro, onHide }) {
   return (
     <Animated.View
       style={[
-        StyleSheet.absoluteFillObject,
         S.introOverlay,
+        StyleSheet.absoluteFillObject,
         {
           opacity: overlayOpacity,
           transform: [{ translateY: overlayTranslateY }],
@@ -91,10 +91,10 @@ function IntroOverlay({ palette, showIntro, onHide }) {
       <Text style={[S.introTitle, { color: palette.text }]}>Welcome back! What's your intention today?</Text>
 
       <View style={S.introButtonsContainer}>
-        <IntroActionButton icon="brain" label="Start 5-min Meditation" palette={palette} />
-        <IntroActionButton icon="book-open" label="Journal My Thoughts" palette={palette} />
-        <IntroActionButton icon="bolt" label="Quick Energy Boost" palette={palette} />
-        <IntroActionButton icon="calendar-alt" label="Plan Ahead" palette={palette} />
+        <IntroActionButton icon="brain" label="Start 5-min Meditation" palette={palette} PillAlert={PillAlert} />
+        <IntroActionButton icon="book-open" label="Journal My Thoughts" palette={palette} PillAlert={PillAlert} />
+        <IntroActionButton icon="bolt" label="Quick Energy Boost" palette={palette} PillAlert={PillAlert} />
+        <IntroActionButton icon="calendar-alt" label="Plan Ahead" palette={palette} PillAlert={PillAlert} />
       </View>
 
       <View style={[S.moodTrackerCard, { backgroundColor: palette.card }]}>
@@ -135,9 +135,9 @@ function IntroOverlay({ palette, showIntro, onHide }) {
   );
 }
 
-function IntroActionButton({ icon, label, palette }) {
+function IntroActionButton({ icon, label, palette, PillAlert }) {
   return (
-    <Pressable style={[S.introActionBtn, { borderColor: palette.border, backgroundColor: palette.ghost }]}>
+    <Pressable onPress={() => PillAlert()} style={[S.introActionBtn, { borderColor: palette.border, backgroundColor: palette.ghost }]}>
       <FontAwesome5 name={icon} size={14} color={palette.text} style={{ marginRight: 6 }} />
       <Text style={{ color: palette.text, fontSize: 13 }}>{label}</Text>
     </Pressable>
@@ -152,8 +152,26 @@ export default function Chatscreen() {
   const isDark = theme === 'dark';
   const palette = isDark ? D : L;
   const flatListRef = useRef(null);
-  const [showIntro, setShowIntro] = useState(true); // Control intro visibility
-  const [renderIntro, setRenderIntro] = useState(true); // Control if intro is mounted
+  const [showIntro, setShowIntro] = useState(true);
+  const [renderIntro, setRenderIntro] = useState(true);
+  const PillY = useRef(new Animated.Value(-100)).current;
+  const navigation = useNavigation();
+
+  const PillAlert = () => {
+    Animated.timing(PillY, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start()
+    setTimeout(() => {
+      Animated.timing(PillY, {
+        toValue: -100,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }, 3000);
+
+  }
 
   // --- Reusable Animated Pressable ---
   function APressable({ children, style, onPress }) {
@@ -243,6 +261,7 @@ export default function Chatscreen() {
 
   return (
     <SafeAreaView style={[S.flex, { backgroundColor: palette.appBg }]}>
+      <LinearGradient colors={palette.introGradientColors} style={[StyleSheet.absoluteFillObject, { flex: 1 }]} />
       <KeyboardAvoidingView
         style={S.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -253,10 +272,18 @@ export default function Chatscreen() {
               <Image style={S.logoBlob} source={require("../assets/logo.png")} />
               <Text style={[S.smallBold, { color: palette.text }]}>Calm Pulse</Text>
             </View>
-            <APressable style={[S.endChatBtn, { backgroundColor: '#f43f5e' }]}>
+            <APressable onPress={() => navigation.goBack()} style={[S.endChatBtn, { backgroundColor: '#f43f5da5' }]}>
               <Text style={S.primaryBtnText}>End Chat</Text>
             </APressable>
           </View>
+          <Animated.View style={[
+            styles.pillContainer,
+            { transform: [{ translateY: PillY }] }
+          ]}>
+            <Text style={styles.pillText}>
+              This feature is not included in the Prototype.
+            </Text>
+          </Animated.View>
 
           <FlatList
             ref={flatListRef}
@@ -267,12 +294,11 @@ export default function Chatscreen() {
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
           />
+          {renderIntro && <IntroOverlay palette={palette} showIntro={showIntro} onHide={() => setRenderIntro(false)} PillAlert={PillAlert} />}
 
           {isTypingBot && <TypingHint palette={palette} />}
           <ChatInput onSend={sendUser} palette={palette} />
         </View>
-
-        {renderIntro && <IntroOverlay palette={palette} showIntro={showIntro} onHide={() => setRenderIntro(false)} />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -285,7 +311,7 @@ const L = {
   text: '#1c2a4d',
   muted: '#8d9fbd',
   border: '#e8edf5',
-  ghost: '#f0f4f9',
+  ghost: '#f0f4f990',
   card: '#ffffff',
   primary: '#5a67d8',
   icon: '#5a67d8',
@@ -297,11 +323,11 @@ const D = {
   text: '#e6efff',
   muted: '#7a8bb8',
   border: '#2a3b5c',
-  ghost: '#222e4d',
-  card: '#1a243d',
-  primary: '#7a9dff',
+  ghost: '#222e4da4',
+  card: '#1a243d90',
+  primary: '#7a9dff3f',
   icon: '#e6efff',
-  introGradientColors: ['#4A3A7F', '#8C5A8C'],
+  introGradientColors: ['#4a3a7fd2', '#8c5a8ca7'],
 };
 
 // --- Styles ---
@@ -315,7 +341,7 @@ const S = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    backgroundColor: 'transparent', // Make header transparent to show introBg if visible
+    backgroundColor: 'transparent',
   },
   logoBlob: { width: 40, height: 40, borderRadius: 20 },
   body: { fontSize: 16, lineHeight: 24 },
@@ -340,7 +366,7 @@ const S = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    zIndex: 10, // Ensure it's on top
+    position: 'relative',
   },
   introTitle: {
     fontSize: 28,
@@ -365,11 +391,12 @@ const S = StyleSheet.create({
     borderWidth: 1,
   },
   moodTrackerCard: {
-    width: '90%',
+    width: '40%',
     padding: 20,
     borderRadius: 15,
     marginBottom: 20,
     alignItems: 'center',
+    paddingVertical: 30
   },
   moodTrackerTitle: {
     fontSize: 16,
@@ -388,10 +415,10 @@ const S = StyleSheet.create({
     // Add background or hover effects if desired
   },
   breatheExerciseCard: {
-    width: '90%',
     padding: 20,
     borderRadius: 15,
     alignItems: 'center',
+    paddingHorizontal: 100
   },
   breatheText: {
     fontSize: 18,
@@ -415,5 +442,32 @@ const S = StyleSheet.create({
   breatheTimer: {
     fontSize: 16,
     marginTop: 10,
+  },
+});
+
+const styles = StyleSheet.create({
+  pillContainer: {
+    position: 'absolute',
+    alignSelf: 'center',
+    marginTop: 15,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(30, 30, 30, 0.52)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  pillText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

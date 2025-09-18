@@ -787,7 +787,7 @@ const D = {
   card: 'rgba(10,14,30,0.9)',
   ghost: 'rgba(15,23,42,0.7)',
   glass: 'rgba(2,6,23,0.6)',
-  primary: '#7dd3fc',
+  primary: '#6f75eeff',
   emphasis: '#ffffff',
   track: 'rgba(148,163,184,0.35)',
   blob: '#334155',
