@@ -1,4 +1,3 @@
-// App.js
 import 'react-native-reanimated';
 import React, { useEffect, useState, Suspense } from 'react';
 import { Platform, View } from 'react-native';
@@ -9,13 +8,9 @@ import { StatusBar } from 'expo-status-bar';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { enGB, registerTranslation } from 'react-native-paper-dates';
 
-// 1) Your mode provider (persisted dark/light/system)
 import { ThemeProvider, useThemeMode } from './components/theme/ThemeProvider';
-
-// 2) Design-system tokens provider (colors, spacing, createStyles, variants)
 import { ThemeProvider as TokensThemeProvider } from './components/theme/theme';
 
-/* ---------- EAGER (bootstrap) ---------- */
 import Check from './screens/Check';
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -24,23 +19,7 @@ import Homescreen from './screens/Homescreen';
 import { height, width } from './components/constants';
 import AlertCenter from './components/AlertCenter';
 import OnboardingQuestions from './screens/OnboardingQuestions';
-import ChatScreen from './screens/ChatScreen';
-
-/* ---------- helper: native lazy, web eager ---------- */
-const lazyOrEager = (WebModule, nativeImporter) =>
-  Platform.OS === 'web'
-    ? (WebModule?.default ?? WebModule) // use eager module on web
-    : React.lazy(nativeImporter);       // lazy on native
-
-const withSuspenseIfLazy = (Comp) => {
-  // On native, Comp is a real lazy component. On web, it’s a normal function.
-  if (Platform.OS === 'web') return Comp;
-  return (props) => (
-    <Suspense fallback={null}>
-      <Comp {...props} />
-    </Suspense>
-  );
-};
+import Chatscreen from './screens/Chatscreen'
 
 registerTranslation('en-GB', enGB);
 
@@ -66,10 +45,8 @@ const linking = {
 };
 
 function AppInner() {
-  // Read the resolved appearance from your simple provider
   const { isDark } = useThemeMode();
 
-  // Feed the tokens provider with a concrete mode
   const tokensMode = isDark ? 'dark' : 'light';
 
   return (
@@ -94,7 +71,7 @@ function AppInner() {
           <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Homescreen" component={Homescreen} options={{ headerShown: false }} />
           <Stack.Screen name="OnboardingQuestions" component={OnboardingQuestions} options={{ headerShown: false }} />
-          <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Chatscreen" component={Chatscreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </TokensThemeProvider>
@@ -114,9 +91,7 @@ export default function App() {
   if (!ready) return null;
 
   return (
-    // Outer: your persisted/system theme controller (ThemeProvider.js)
     <ThemeProvider>
-      {/* Inner: your app content, also wrapped by tokens provider in AppInner */}
       <View style={{ flex: 1, height: height, maxWidth: width }}>
         <AppInner />
       </View>

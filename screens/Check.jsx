@@ -7,7 +7,7 @@ import isAdmin from '../utils/isAdmin';
 // Adjust these if your route names differ:
 const ADMIN_SCREEN = 'Admin';
 const USER_SCREEN = 'Homescreen';
-const LOGGED_OUT_SCREEN = 'WelcomeScreen'; // or 'Login'
+const LOGGED_OUT_SCREEN = 'Chatscreen'; // or 'Login'
 
 export default class Check extends Component {
   _isMounted = false;

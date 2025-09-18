@@ -328,7 +328,7 @@ export default function Login() {
             disabled={loading}
             style={[styles.cta, { backgroundColor: "transparent", marginTop: S.sm, shadowOpacity: 0 }]}
           >
-            <Text style={[styles.ctaText, { color: "#000  " }]}>Register</Text>
+            <Text style={[styles.ctaText, { color: !isDark ? "#000" : "#FFF" }]}>Register</Text>
           </Pressable>
 
           <View style={styles.divider}>

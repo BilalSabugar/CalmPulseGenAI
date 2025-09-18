@@ -11,16 +11,21 @@ import {
   Animated,
   Easing,
   TextInput,
-  Image
+  Image,
+  Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { width } from '../components/constants';
 
-type ThemeChoice = 'light' | 'dark' | 'system';
-export default function CalmPulseWelcomePageRN() {
+// --- ADD THIS AT THE TOP ---
+// Change this value to scale the entire content of the screen.
+const CONTENT_SCALE = 1.25;
 
-  const [themeChoice, setThemeChoice] = useState<ThemeChoice>('system');
+export default function WelcomeScreen() {
+
+  const [themeChoice, setThemeChoice] = useState('system');
   const systemColorScheme = Appearance.getColorScheme();
   const { width, height } = useWindowDimensions();
   const isDesktop = width > height; // orientation-based rule
@@ -31,7 +36,7 @@ export default function CalmPulseWelcomePageRN() {
   useEffect(() => {
     (async () => {
       try {
-        const saved = (await AsyncStorage.getItem('cp-theme')) as ThemeChoice | null;
+        const saved = await AsyncStorage.getItem('cp-theme');
         if (saved) setThemeChoice(saved);
       } catch { }
     })();
@@ -57,7 +62,7 @@ export default function CalmPulseWelcomePageRN() {
   const orbA = useRef(new Animated.Value(0)).current;
   const orbB = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    const mk = (v: Animated.Value, dur: number) =>
+    const mk = (v, dur) =>
       Animated.loop(
         Animated.sequence([
           Animated.timing(v, { toValue: 1, duration: dur, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
@@ -69,22 +74,22 @@ export default function CalmPulseWelcomePageRN() {
   }, [orbA, orbB]);
 
   // Section refs for programmatic scroll
-  const scrollRef = useRef<ScrollView | null>(null);
-  const featureRef = useRef<View | null>(null);
-  const safetyRef = useRef<View | null>(null);
-  const toolboxRef = useRef<View | null>(null);
-  const instRef = useRef<View | null>(null);
+  const scrollRef = useRef(null);
+  const featureRef = useRef(null);
+  const safetyRef = useRef(null);
+  const toolboxRef = useRef(null);
+  const instRef = useRef(null);
 
-  const goToLogin=()=>{
+  const goToLogin = () => {
     navigation.navigate('Login');
   }
 
-  const scrollTo = (ref: React.RefObject<View | null>) => {
+  const scrollTo = (ref) => {
     if (!scrollRef.current || !ref.current) return;
-    (ref.current as any).measureLayout(
+    ref.current.measureLayout(
       scrollRef.current.getInnerViewNode(),
-      (x: number, y: number) => {
-        scrollRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+      (x, y) => {
+        scrollRef.current?.scrollTo({ y: Math.max(0, y - (12 * CONTENT_SCALE)), animated: true });
       },
       () => { }
     );
@@ -118,9 +123,8 @@ export default function CalmPulseWelcomePageRN() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       {/* Header */}
-      <View style={[S.rowBetween, S.headerWrap, { borderBottomColor: C.border, backgroundColor: C.headerBg, height: isDesktop ? 120 : 60 }]}>
-        <View style={[S.row, { gap: 10 }]}>
-          {/* <View style={[S.logoBlob, { backgroundColor: C.brandBlob }]} /> */}
+      <View style={[S.rowBetween, S.headerWrap, { borderBottomColor: C.border, backgroundColor: C.headerBg, height: isDesktop ? 120 * CONTENT_SCALE : 60 * CONTENT_SCALE }]}>
+        <View style={[S.row, { gap: 10 * CONTENT_SCALE }]}>
           <Image style={[S.logoBlob, { backgroundColor: C.brandBlob }]} source={'../assets/ca-india-logo.png'} />
           <View>
             <Text style={[S.h2, { color: C.fg }]}>Calm Pulse AI</Text>
@@ -129,7 +133,7 @@ export default function CalmPulseWelcomePageRN() {
         </View>
 
         {isDesktop ? (
-          <View style={[S.row, { gap: 8 }]}>
+          <View style={[S.row, { gap: 8 * CONTENT_SCALE }]}>
             <HeaderLink label="Features" onPress={() => scrollTo(featureRef)} color={C.link} />
             <HeaderLink label="Safety" onPress={() => scrollTo(safetyRef)} color={C.link} />
             <HeaderLink label="Toolbox" onPress={() => scrollTo(toolboxRef)} color={C.link} />
@@ -138,7 +142,7 @@ export default function CalmPulseWelcomePageRN() {
             <ThemeSwitchRN choice={themeChoice} setChoice={setThemeChoice} isDark={isDark} />
           </View>
         ) : (
-          <View style={[S.row, { gap: 8 }]}>
+          <View style={[S.row, { gap: 8 * CONTENT_SCALE }]}>
             <ThemeSwitchRN choice={themeChoice} setChoice={setThemeChoice} isDark={isDark} />
             <PrimaryOutline label="Menu" onPress={() => scrollTo(featureRef)} />
           </View>
@@ -150,11 +154,11 @@ export default function CalmPulseWelcomePageRN() {
         <Animated.View
           style={{
             position: 'absolute',
-            top: -80,
+            top: -80 * CONTENT_SCALE,
             right: width * 0.25,
-            width: 220,
-            height: 220,
-            borderRadius: 110,
+            width: 220 * CONTENT_SCALE,
+            height: 220 * CONTENT_SCALE,
+            borderRadius: 110 * CONTENT_SCALE,
             backgroundColor: isDark ? 'rgba(67,56,202,0.25)' : 'rgba(165,180,252,0.35)',
             transform: [
               {
@@ -166,11 +170,11 @@ export default function CalmPulseWelcomePageRN() {
         <Animated.View
           style={{
             position: 'absolute',
-            top: -80,
+            top: -80 * CONTENT_SCALE,
             right: width * 0.2,
-            width: 120,
-            height: 120,
-            borderRadius: 90,
+            width: 120 * CONTENT_SCALE,
+            height: 120 * CONTENT_SCALE,
+            borderRadius: 90 * CONTENT_SCALE,
             backgroundColor: isDark ? 'rgba(124,58,237,0.2)' : 'rgba(216,180,254,0.3)',
             transform: [
               {
@@ -181,21 +185,27 @@ export default function CalmPulseWelcomePageRN() {
         />
       </View>
 
-      <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 32 }} style={{ backgroundColor: C.bg }}>
+      <ScrollView showsVerticalScrollIndicator={false} ref={scrollRef} contentContainerStyle={{ paddingBottom: 32 * CONTENT_SCALE }} style={{ backgroundColor: C.bg }}>
         {/* Hero */}
-        <View style={[S.container, { paddingVertical: isDesktop ? 24 : 16 }]}>
-          <View style={[isDesktop ? S.row : undefined, { gap: 16, alignItems: 'center' }]}>
+        <View style={[S.container, { paddingVertical: isDesktop ? 24 * CONTENT_SCALE : 16 * CONTENT_SCALE }]}>
+          <View style={[isDesktop ? S.row : undefined, { gap: 16 * CONTENT_SCALE, alignItems: 'center' }]}>
             {/* Left copy */}
             <View style={{ flex: 1 }}>
-              <Text style={[S.h1, { color: C.fg }]}>Calm Pulse AI</Text>
-              <Text style={[S.sub, { color: C.subtle, marginTop: 6 }]}>Your private AI companion for stress, stigma, and self‑care.</Text>
-              <Text style={[S.body, { color: C.body, marginTop: 10 }]}>An empathetic, always‑available space to express yourself, track your mood, and practice healthy coping—confidentially and safely.</Text>
-              <View style={[S.rowWrap, { gap: 8, marginTop: 14 }]}>
+              <Text
+                style={[
+                  S.h1,
+                  Platform.OS !== 'web' && { color: C.h1AccentNative },
+                ]}
+              >
+                Calm Pulse AI
+              </Text>
+              <Text style={[S.sub, { color: C.subtle, marginTop: 6 * CONTENT_SCALE }]}>Your private AI companion for stress, stigma, and self‑care.</Text>
+              <Text style={[S.body, { color: C.body, marginTop: 10 * CONTENT_SCALE }]}>An empathetic, always‑available space to express yourself, track your mood, and practice healthy coping—confidentially and safely.</Text>
+              <View style={[S.rowWrap, { gap: 8 * CONTENT_SCALE, marginTop: 14 * CONTENT_SCALE }]}>
                 <PrimaryButton label="Start a private chat" onPress={() => { }} />
                 <ChipButton label="Explore wellness tools" onPress={() => scrollTo(toolboxRef)} isDark={isDark} />
-                <ChipSolid label="For schools & NGOs" onPress={() => scrollTo(instRef)} isDark={isDark} />
               </View>
-              <View style={{ marginTop: 8 }}>
+              <View style={{ marginTop: 8 * CONTENT_SCALE }}>
                 <Text style={[S.caption, { color: C.subtle }]}>🔒 End‑to‑end encrypted • You control your data</Text>
               </View>
             </View>
@@ -203,7 +213,7 @@ export default function CalmPulseWelcomePageRN() {
             {/* Chat Preview Card */}
             <View style={[S.card, { flex: 1, backgroundColor: C.card, borderColor: C.border }]}>
               <View style={[S.rowBetween]}>
-                <View style={[S.row, { gap: 10 }]}>
+                <View style={[S.row, { gap: 10 * CONTENT_SCALE }]}>
                   <View style={[S.avatar, { backgroundColor: C.brandBlob }]} />
                   <View>
                     <Text style={[S.smallBold, { color: C.fg }]}>Calm Pulse</Text>
@@ -213,12 +223,12 @@ export default function CalmPulseWelcomePageRN() {
                 <Text style={[S.caption, { color: C.subtle }]}>E2E</Text>
               </View>
 
-              <View style={{ marginTop: 12, gap: 8 }}>
+              <View style={{ marginTop: 12 * CONTENT_SCALE, gap: 8 * CONTENT_SCALE }}>
                 <Bubble who="bot" isDark={isDark}>Hey, I’m here for you. What’s on your mind today?</Bubble>
                 <Bubble who="me" isDark={isDark}>I’m anxious about exams and can’t focus.</Bubble>
                 <Bubble who="bot" isDark={isDark}>Thanks for sharing. Let’s take a 60‑second breathing break together, then I’ll suggest a study plan that fits your energy.</Bubble>
 
-                <View style={[S.rowWrap, { gap: 8, marginTop: 4 }]}>
+                <View style={[S.rowWrap, { gap: 8 * CONTENT_SCALE, marginTop: 4 * CONTENT_SCALE }]}>
                   {['✨ 1‑min Breathe', '📝 Grounding Journal', '🎧 Calm Sound', '💪 Focus Routine'].map((t) => (
                     <Pressable key={t} onPress={() => { }} style={[S.tool, { backgroundColor: C.chipBg, borderColor: C.border }]}>
                       <Text style={[S.tiny, { color: C.fg }]}>{t}</Text>
@@ -231,16 +241,16 @@ export default function CalmPulseWelcomePageRN() {
         </View>
 
         {/* Features */}
-        <View ref={featureRef} style={[S.container, { paddingVertical: 16 }]}>
+        <View ref={featureRef} style={[S.container, { paddingVertical: 16 * CONTENT_SCALE }]}>
           <Text style={[S.h2, { color: C.fg }]}>What makes Calm Pulse different</Text>
-          <Text style={[S.body, { color: C.body, marginTop: 6 }]}>Designed for youth: private by default, supportive by design, and connected to real help when needed.</Text>
+          <Text style={[S.body, { color: C.body, marginTop: 6 * CONTENT_SCALE }]}>Designed for youth: private by default, supportive by design, and connected to real help when needed.</Text>
 
-          <View style={[S.grid(isDesktop ? 3 : 1), { marginTop: 12 }]}>
+          <View style={[S.grid(isDesktop ? 3 : 1), { marginTop: 12 * CONTENT_SCALE }]}>
             {features.map((f) => (
               <View key={f.title} style={[S.tile, { backgroundColor: C.card, borderColor: C.border }]}>
-                <Text style={{ fontSize: 20 }} accessibilityElementsHidden>{f.icon}</Text>
-                <Text style={[S.smallBold, { color: C.fg, marginTop: 6 }]}>{f.title}</Text>
-                <Text style={[S.tiny, { color: C.body, marginTop: 4 }]}>{f.desc}</Text>
+                <Text style={{ fontSize: 20 * CONTENT_SCALE }} accessibilityElementsHidden>{f.icon}</Text>
+                <Text style={[S.h3, { color: C.fg, marginTop: 6 * CONTENT_SCALE }]}>{f.title}</Text>
+                <Text style={[S.tiny, { color: C.body, marginTop: 4 * CONTENT_SCALE }]}>{f.desc}</Text>
               </View>
             ))}
           </View>
@@ -248,11 +258,11 @@ export default function CalmPulseWelcomePageRN() {
 
         {/* Safety & Toolbox */}
         <View ref={safetyRef} style={{ backgroundColor: C.sectionBg, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: C.border }}>
-          <View style={[S.container, { paddingVertical: 16 }]}>
-            <View style={[isDesktop ? S.row : undefined, { gap: 16, alignItems: 'flex-start' }]}>
+          <View style={[S.container, { paddingVertical: 16 * CONTENT_SCALE }]}>
+            <View style={[isDesktop ? S.row : undefined, { gap: 16 * CONTENT_SCALE, alignItems: 'flex-start' }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[S.h2, { color: C.fg }]}>Confidentiality and crisis‑smart by default</Text>
-                <View style={{ marginTop: 8, gap: 6 }}>
+                <View style={{ marginTop: 8 * CONTENT_SCALE, gap: 6 * CONTENT_SCALE }}>
                   {[
                     '🔒 End‑to‑end encryption; private storage with transparent controls.',
                     '🛟 Crisis signals prompt on‑screen options for helplines or trusted contacts.',
@@ -262,7 +272,7 @@ export default function CalmPulseWelcomePageRN() {
                     <Text key={t} style={[S.body, { color: C.body }]}>{t}</Text>
                   ))}
                 </View>
-                <Text style={[S.caption, { color: C.subtle, marginTop: 8 }]}>
+                <Text style={[S.caption, { color: C.subtle, marginTop: 8 * CONTENT_SCALE }]}>
                   <Text style={{ fontWeight: '600' }}>Disclaimer: </Text>
                   Calm Pulse is not a substitute for professional care. If you are in immediate danger, contact your local emergency number right away.
                 </Text>
@@ -270,12 +280,12 @@ export default function CalmPulseWelcomePageRN() {
 
               {/* Toolbox tiles */}
               <View ref={toolboxRef} style={{ flex: 1 }}>
-                <View style={[S.grid(2), { gap: 10 }]}>
+                <View style={[S.grid(2), { gap: 10 * CONTENT_SCALE }]}>
                   {['Breathing', 'Meditations', 'Journaling', 'Affirmations', 'Mood Check', 'Vent Mode'].map((t) => (
                     <Pressable key={t} onPress={() => { }} style={[S.tile, { backgroundColor: C.chipBg, borderColor: C.border }]}>
-                      <Text style={{ fontSize: 26 }} accessibilityElementsHidden>🌿</Text>
-                      <Text style={[S.smallBold, { color: C.fg, marginTop: 6 }]}>{t}</Text>
-                      <Text style={[S.tiny, { color: C.subtle, marginTop: 2 }]}>Quick access</Text>
+                      <Text style={{ fontSize: 26 * CONTENT_SCALE }} accessibilityElementsHidden>🌿</Text>
+                      <Text style={[S.smallBold, { color: C.fg, marginTop: 6 * CONTENT_SCALE }]}>{t}</Text>
+                      <Text style={[S.tiny, { color: C.subtle, marginTop: 2 * CONTENT_SCALE }]}>Quick access</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -285,26 +295,28 @@ export default function CalmPulseWelcomePageRN() {
         </View>
 
         {/* How it works */}
-        <View style={[S.container, { paddingVertical: 16 }]}>
+        <View style={[S.container, { paddingVertical: 16 * CONTENT_SCALE }]}>
           <Text style={[S.h2, { color: C.fg }]}>How it works</Text>
-          <View style={[S.grid(isDesktop ? 4 : 2), { marginTop: 12 }]}>
+          <View style={[S.grid(isDesktop ? 4 : 2), { marginTop: 12 * CONTENT_SCALE }]}>
             {steps.map((s) => (
               <View key={s.n} style={[S.tile, { backgroundColor: C.card, borderColor: C.border }]}>
-                <View style={[S.badge, { backgroundColor: C.brand, shadowColor: C.brand }]}><Text style={[S.tinyBold, { color: '#fff' }]}>{s.n}</Text></View>
-                <Text style={[S.smallBold, { color: C.fg, marginTop: 8 }]}>{s.t}</Text>
-                <Text style={[S.tiny, { color: C.body, marginTop: 4 }]}>{s.d}</Text>
+                <View style={[S.badge, { backgroundColor: C.brand, shadowColor: C.brand }]}>
+                  <Text style={[S.h6, { color: '#fff' }]}>{s.n}</Text>
+                </View>
+                <Text style={[S.smallBold, { color: C.fg, marginTop: 8 * CONTENT_SCALE }]}>{s.t}</Text>
+                <Text style={[S.tiny, { color: C.body, marginTop: 4 * CONTENT_SCALE }]}>{s.d}</Text>
               </View>
             ))}
           </View>
         </View>
 
         {/* Impact & CTA */}
-        <View ref={instRef} style={[S.container, { paddingBottom: 24 }]}>
+        <View ref={instRef} style={[S.container, { paddingBottom: 24 * CONTENT_SCALE }]}>
           <View style={[S.callout, { backgroundColor: C.calloutBg, borderColor: C.border }]}>
             <View style={{ flex: 1 }}>
               <Text style={[S.h2, { color: C.fg }]}>A safer first step toward support</Text>
-              <Text style={[S.body, { color: C.body, marginTop: 6 }]}>Available 24/7 to reduce stigma, build resilience, and intervene early when things feel heavy.</Text>
-              <View style={[S.grid(2), { marginTop: 8 }]}>
+              <Text style={[S.body, { color: C.body, marginTop: 6 * CONTENT_SCALE }]}>Available 24/7 to reduce stigma, build resilience, and intervene early when things feel heavy.</Text>
+              <View style={[S.grid(2), { marginTop: 8 * CONTENT_SCALE }]}>
                 {['✅ Anonymous onboarding', '✅ Voice or text chat', '✅ Multilingual support', '✅ Integrates with helplines'].map((t) => (
                   <Text key={t} style={[S.body, { color: C.body }]}>{t}</Text>
                 ))}
@@ -314,47 +326,47 @@ export default function CalmPulseWelcomePageRN() {
             {/* Form */}
             <View style={[S.formCard, { backgroundColor: C.card, borderColor: C.border }]}>
               <Text style={[S.smallBold, { color: C.fg }]}>Get started now</Text>
-              <Text style={[S.tiny, { color: C.body, marginTop: 4 }]}>No email required. Create a passcode to keep your space private.</Text>
+              <Text style={[S.tiny, { color: C.body, marginTop: 4 * CONTENT_SCALE }]}>No email required. Create a passcode to keep your space private.</Text>
 
-              <View style={{ marginTop: 10 }}>
+              <View style={{ marginTop: 10 * CONTENT_SCALE }}>
                 <Text style={[S.tinyBold, { color: C.fg }]}>Nickname</Text>
                 <TextInput placeholder="e.g., SkyWalker" placeholderTextColor={C.placeholder} style={[S.input, { color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]} />
               </View>
-              <View style={{ marginTop: 10 }}>
+              <View style={{ marginTop: 10 * CONTENT_SCALE }}>
                 <Text style={[S.tinyBold, { color: C.fg }]}>4‑digit passcode</Text>
-                <TextInput placeholder="••••" placeholderTextColor={C.placeholder} secureTextEntry style={[S.input, { letterSpacing: 4, color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]} />
+                <TextInput placeholder="••••" placeholderTextColor={C.placeholder} secureTextEntry style={[S.input, { letterSpacing: 4 * CONTENT_SCALE, color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]} />
               </View>
-              <PrimaryButton label="Enter Calm Space" onPress={() => { }} style={{ marginTop: 10 }} />
-              <Text style={[S.caption, { color: C.subtle, marginTop: 6 }]}>By continuing you agree to the community care rules.</Text>
+              <PrimaryButton label="Enter Calm Space" onPress={() => { }} style={{ marginTop: 10 * CONTENT_SCALE }} />
+              <Text style={[S.caption, { color: C.subtle, marginTop: 6 * CONTENT_SCALE }]}>By continuing you agree to the community care rules.</Text>
             </View>
           </View>
         </View>
 
         {/* Footer */}
         <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border, backgroundColor: C.headerBg }}>
-          <View style={[S.container, { paddingVertical: 16 }]}>
-            <View style={[isDesktop ? S.row : undefined, { gap: 16, alignItems: 'flex-start' }]}>
+          <View style={[S.container, { paddingVertical: 16 * CONTENT_SCALE }]}>
+            <View style={[isDesktop ? S.row : undefined, { gap: 16 * CONTENT_SCALE, alignItems: 'flex-start' }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[S.smallBold, { color: C.fg }]}>Calm Pulse AI</Text>
-                <Text style={[S.tiny, { color: C.body, marginTop: 4 }]}>“Your private AI companion for stress, stigma, and self‑care.”</Text>
+                <Text style={[S.tiny, { color: C.body, marginTop: 4 * CONTENT_SCALE }]}>“Your private AI companion for stress, stigma, and self‑care.”</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[S.tinyBold, { color: C.fg }]}>Resources</Text>
                 {['Features', 'Safety & Trust', 'Wellness Toolbox'].map((t) => (
-                  <Text key={t} style={[S.tiny, { color: C.link, marginTop: 4 }]} onPress={() => { }}>{t}</Text>
+                  <Text key={t} style={[S.tiny, { color: C.link, marginTop: 4 * CONTENT_SCALE }]} onPress={() => { }}>{t}</Text>
                 ))}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[S.tinyBold, { color: C.fg }]}>If you’re in crisis</Text>
-                <Text style={[S.tiny, { color: C.body, marginTop: 4 }]}>Call your local emergency number or a trusted helpline immediately.</Text>
-                <View style={[S.rowWrap, { gap: 6, marginTop: 8 }]}>
+                <Text style={[S.tiny, { color: C.body, marginTop: 4 * CONTENT_SCALE }]}>Call your local emergency number or a trusted helpline immediately.</Text>
+                <View style={[S.rowWrap, { gap: 6 * CONTENT_SCALE, marginTop: 8 * CONTENT_SCALE }]}>
                   <ChipOutline label="India: 112 (Emergency)" onPress={() => { }} isDark={isDark} />
                   <ChipOutline label="Kiran Helpline: 1800‑599‑0019" onPress={() => { }} isDark={isDark} />
                 </View>
               </View>
             </View>
           </View>
-          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border, paddingVertical: 10 }}>
+          <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border, paddingVertical: 10 * CONTENT_SCALE }}>
             <Text style={[S.caption, { color: C.subtle, textAlign: 'center' }]}>© {new Date().getFullYear()} Calm Pulse. All rights reserved.</Text>
           </View>
         </View>
@@ -367,15 +379,15 @@ export default function CalmPulseWelcomePageRN() {
 // Components
 // ---------------------------------------------
 
-function HeaderLink({ label, onPress, color }: { label: string; onPress: () => void; color: string }) {
+function HeaderLink({ label, onPress, color }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent' }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [{ paddingVertical: 8 * CONTENT_SCALE, paddingHorizontal: 12 * CONTENT_SCALE, borderRadius: 999, backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent' }]}>
       <Text style={[S.tinyBold, { color }]}>{label}</Text>
     </Pressable>
   );
 }
 
-function PrimaryButton({ label, onPress, style }: { label: string; onPress: () => void; style?: any }) {
+function PrimaryButton({ label, onPress, style }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [S.primaryBtn, style, { opacity: pressed ? 0.85 : 1 }]}>
       <Text style={S.primaryBtnText}>{label}</Text>
@@ -383,7 +395,7 @@ function PrimaryButton({ label, onPress, style }: { label: string; onPress: () =
   );
 }
 
-function PrimaryOutline({ label, onPress }: { label: string; onPress: () => void }) {
+function PrimaryOutline({ label, onPress }) {
   return (
     <Pressable onPress={onPress} style={[S.outlineBtn]}>
       <Text style={[S.tinyBold]}> {label} </Text>
@@ -391,7 +403,7 @@ function PrimaryOutline({ label, onPress }: { label: string; onPress: () => void
   );
 }
 
-function ChipButton({ label, onPress, isDark }: { label: string; onPress: () => void; isDark: boolean }) {
+function ChipButton({ label, onPress, isDark }) {
   return (
     <Pressable onPress={onPress} style={[S.chip, { backgroundColor: isDark ? 'rgba(2,6,23,0.9)' : '#fff', borderColor: isDark ? '#334155' : '#cbd5e1' }]}>
       <Text style={[S.tinyBold, { color: isDark ? "#FFF" : "#000" }]}>{label}</Text>
@@ -399,7 +411,7 @@ function ChipButton({ label, onPress, isDark }: { label: string; onPress: () => 
   );
 }
 
-function ChipSolid({ label, onPress, isDark }: { label: string; onPress: () => void; isDark: boolean }) {
+function ChipSolid({ label, onPress, isDark }) {
   return (
     <Pressable onPress={onPress} style={[S.chip, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.9)' }]}>
       <Text style={[S.tinyBold, { color: isDark ? '#e2e8f0' : '#fff' }]}>{label}</Text>
@@ -407,15 +419,15 @@ function ChipSolid({ label, onPress, isDark }: { label: string; onPress: () => v
   );
 }
 
-function ChipOutline({ label, onPress, isDark }: { label: string; onPress: () => void; isDark: boolean }) {
+function ChipOutline({ label, onPress, isDark }) {
   return (
     <Pressable onPress={onPress} style={[S.chip, { backgroundColor: 'transparent', borderColor: isDark ? '#334155' : '#cbd5e1' }]}>
-      <Text style={[S.tiny,{color:isDark?"#FFF":"#000"}]}>{label}</Text>
+      <Text style={[S.tiny, { color: isDark ? "#FFF" : "#000" }]}>{label}</Text>
     </Pressable>
   );
 }
 
-function Bubble({ who, children, isDark }: { who: 'bot' | 'me'; children: React.ReactNode; isDark: boolean }) {
+function Bubble({ who, children, isDark }) {
   const isMe = who === 'me';
   return (
     <View style={{ flexDirection: 'row', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
@@ -423,43 +435,43 @@ function Bubble({ who, children, isDark }: { who: 'bot' | 'me'; children: React.
         style={[
           {
             maxWidth: '80%',
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 16,
+            paddingHorizontal: 12 * CONTENT_SCALE,
+            paddingVertical: 8 * CONTENT_SCALE,
+            borderRadius: 16 * CONTENT_SCALE,
           },
           isMe
             ? { backgroundColor: '#4f46e5' } // indigo-600
             : { backgroundColor: isDark ? 'rgba(30,41,59,0.7)' : '#f1f5f9' },
-          isMe ? { borderBottomRightRadius: 6 } : { borderBottomLeftRadius: 6 },
+          isMe ? { borderBottomRightRadius: 6 * CONTENT_SCALE } : { borderBottomLeftRadius: 6 * CONTENT_SCALE },
         ]}
       >
-        <Text style={{ color: isMe ? '#fff' : isDark ? '#e2e8f0' : '#0f172a', fontSize: 14 }}>{children as any}</Text>
+        <Text style={{ color: isMe ? '#fff' : isDark ? '#e2e8f0' : '#0f172a', fontSize: 14 * CONTENT_SCALE }}>{children}</Text>
       </View>
     </View>
   );
 }
 
-function ThemeSwitchRN({ choice, setChoice, isDark }: { choice: ThemeChoice; setChoice: (t: ThemeChoice) => void; isDark: boolean }) {
-  const Btn = ({ t, label, symbol }: { t: ThemeChoice; label: string; symbol: string }) => (
+function ThemeSwitchRN({ choice, setChoice, isDark }) {
+  const Btn = ({ t, label, symbol }) => (
     <Pressable
       onPress={() => setChoice(t)}
       accessibilityLabel={`Switch to ${label} theme`}
       style={({ pressed }) => [
         {
-          paddingHorizontal: 10,
-          paddingVertical: 6,
+          paddingHorizontal: 10 * CONTENT_SCALE,
+          paddingVertical: 6 * CONTENT_SCALE,
           borderRadius: 999,
-          marginHorizontal: 2,
+          marginHorizontal: 2 * CONTENT_SCALE,
           backgroundColor: choice === t ? (isDark ? '#fff' : '#0f172a') : 'transparent',
         },
         pressed && { opacity: 0.85 },
       ]}
     >
-      <Text style={{ fontSize: 12, color: choice === t ? (isDark ? '#0f172a' : '#fff') : isDark ? '#e2e8f0' : '#0f172a' }}>{symbol}</Text>
+      <Text style={{ fontSize: 12 * CONTENT_SCALE, color: choice === t ? (isDark ? '#0f172a' : '#fff') : isDark ? '#e2e8f0' : '#0f172a' }}>{symbol}</Text>
     </Pressable>
   );
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 4, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: isDark ? '#334155' : '#cbd5e1', backgroundColor: isDark ? 'rgba(2,6,23,0.7)' : 'rgba(255,255,255,0.7)' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 4 * CONTENT_SCALE, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: isDark ? '#334155' : '#cbd5e1', backgroundColor: isDark ? 'rgba(2,6,23,0.7)' : 'rgba(255,255,255,0.7)' }}>
       <Btn t="light" label="light" symbol="☀️" />
       <Btn t="system" label="system" symbol="🖥️" />
       <Btn t="dark" label="dark" symbol="🌙" />
@@ -467,15 +479,16 @@ function ThemeSwitchRN({ choice, setChoice, isDark }: { choice: ThemeChoice; set
   );
 }
 
+
 // ---------------------------------------------
 // Styles & Theme
 // ---------------------------------------------
 
-function buildColors(dark: boolean) {
+function buildColors(dark) {
   if (!dark) {
     return {
       bg: '#f8fafc', // slate-50
-      fg: '#0f172a',
+      fg: 'linear-gradient(90deg, #7dd3fc, #c7d2fe)',
       body: '#334155',
       subtle: '#64748b',
       link: '#0f172a',
@@ -489,10 +502,11 @@ function buildColors(dark: boolean) {
       brandBlob: '#6366f1',
       placeholder: '#94a3b8',
       inputBg: '#fff',
+      h1AccentNative: '#4f46e5',
     };
   }
   return {
-    bg: '#020617', // slate-950
+    bg: '#000', // slate-950
     fg: '#e2e8f0',
     body: '#cbd5e1',
     subtle: '#94a3b8',
@@ -507,50 +521,56 @@ function buildColors(dark: boolean) {
     brandBlob: 'rgba(99,102,241,0.6)',
     placeholder: '#64748b',
     inputBg: '#0b1220',
-  } as const;
+    h1AccentNative: '#a5b4fc',
+  };
 }
 
 const S = StyleSheet.create({
-  flex: { flex: 1 },
-  container: { paddingHorizontal: 16 },
+  flex: { flex: 1, overflow: "hidden", maxWidth: width },
+  container: { paddingHorizontal: 16 * CONTENT_SCALE },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap' },
 
-  headerWrap: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
-  logoBlob: { width: 64, height: 64, borderRadius: 12 },
+  headerWrap: { paddingHorizontal: 16 * CONTENT_SCALE, paddingVertical: 10 * CONTENT_SCALE, borderBottomWidth: StyleSheet.hairlineWidth },
+  logoBlob: { width: 64 * CONTENT_SCALE, height: 64 * CONTENT_SCALE, borderRadius: 12 * CONTENT_SCALE },
 
-  // NEW: shared chip style used by ChipButton / ChipSolid / ChipOutline
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
+  chip: { paddingHorizontal: 12 * CONTENT_SCALE, paddingVertical: 8 * CONTENT_SCALE, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
 
 
   // Typography
-  h1: { fontSize: 36, fontWeight: '800' },
-  h2: { fontSize: 22, fontWeight: '700' },
-  h6: { fontSize: 16, fontWeight: '700' },
-  sub: { fontSize: 16 },
-  body: { fontSize: 14 },
-  meta: { fontSize: 12 },
-  smallBold: { fontSize: 14, fontWeight: '600' },
-  tiny: { fontSize: 12 },
-  tinyBold: { fontSize: 12, fontWeight: '700' },
-  caption: { fontSize: 11 },
+  h1: {
+    ...(Platform.OS === 'web'
+      ? { backgroundImage: 'linear-gradient(45deg, #4f46e5, #e6e5eeff)', WebkitBackgroundClip: 'text', color: 'transparent' }
+      : null),
+    fontSize: 48 * CONTENT_SCALE, fontWeight: '800'
+  },
+  h2: { fontSize: 22 * CONTENT_SCALE, fontWeight: '700' },
+  h3: { fontSize: 20 * CONTENT_SCALE, fontWeight: '600' },
+  h6: { fontSize: 16 * CONTENT_SCALE, fontWeight: '700' },
+  sub: { fontSize: 16 * CONTENT_SCALE },
+  body: { fontSize: 14 * CONTENT_SCALE },
+  meta: { fontSize: 12 * CONTENT_SCALE },
+  smallBold: { fontSize: 14 * CONTENT_SCALE, fontWeight: '600' },
+  tiny: { fontSize: 12 * CONTENT_SCALE },
+  tinyBold: { fontSize: 12 * CONTENT_SCALE, fontWeight: '700' },
+  caption: { fontSize: 11 * CONTENT_SCALE },
 
   // Cards & UI
-  card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 20, padding: 12, shadowOpacity: 0.1, shadowRadius: 8 },
-  avatar: { width: 32, height: 32, borderRadius: 16 },
-  tool: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth },
-  tile: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, padding: 12, marginBottom: 10 },
-  badge: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.2, shadowRadius: 6 },
-  callout: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 22, padding: 16, flexDirection: 'row', gap: 16, alignItems: 'center' },
-  formCard: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, padding: 12, flex: 1 },
+  card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 20 * CONTENT_SCALE, padding: 12 * CONTENT_SCALE, shadowOpacity: 0.1, shadowRadius: 8 * CONTENT_SCALE },
+  avatar: { width: 32 * CONTENT_SCALE, height: 32 * CONTENT_SCALE, borderRadius: 16 * CONTENT_SCALE },
+  tool: { paddingHorizontal: 10 * CONTENT_SCALE, paddingVertical: 8 * CONTENT_SCALE, borderRadius: 12 * CONTENT_SCALE, borderWidth: StyleSheet.hairlineWidth },
+  tile: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16 * CONTENT_SCALE, padding: 12 * CONTENT_SCALE, marginBottom: 10 * CONTENT_SCALE, alignItems: 'center', shadowOpacity: 0.1, shadowRadius: 8 * CONTENT_SCALE },
+  badge: { width: 50 * CONTENT_SCALE, height: 50 * CONTENT_SCALE, borderRadius: 64 * CONTENT_SCALE, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.2, shadowRadius: 6 * CONTENT_SCALE },
+  callout: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 22 * CONTENT_SCALE, padding: 16 * CONTENT_SCALE, flexDirection: 'row', gap: 16 * CONTENT_SCALE, alignItems: 'center' },
+  formCard: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16 * CONTENT_SCALE, padding: 12 * CONTENT_SCALE, flex: 1 },
 
-  input: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, marginTop: 4 },
+  input: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12 * CONTENT_SCALE, paddingHorizontal: 10 * CONTENT_SCALE, paddingVertical: 10 * CONTENT_SCALE, marginTop: 4 * CONTENT_SCALE, fontSize: 14 * CONTENT_SCALE },
 
-  primaryBtn: { backgroundColor: '#4f46e5', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
-  primaryBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  primaryBtn: { backgroundColor: '#4f46e5', paddingHorizontal: 16 * CONTENT_SCALE, paddingVertical: 10 * CONTENT_SCALE, borderRadius: 999 },
+  primaryBtnText: { color: '#fff', fontSize: 13 * CONTENT_SCALE, fontWeight: '600' },
 
-  outlineBtn: { borderWidth: StyleSheet.hairlineWidth, borderColor: '#cbd5e1', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
+  outlineBtn: { borderWidth: StyleSheet.hairlineWidth, borderColor: '#cbd5e1', paddingHorizontal: 12 * CONTENT_SCALE, paddingVertical: 8 * CONTENT_SCALE, borderRadius: 999 },
 
-  grid: (cols: number) => ({ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' as const, ...(cols > 1 ? {} : {}) }),
+  grid: (cols) => ({ flexDirection: 'row', flexWrap: 'wrap', gap: 10 * CONTENT_SCALE, justifyContent: 'space-between', ...(cols > 1 ? {} : {}) }),
 });
