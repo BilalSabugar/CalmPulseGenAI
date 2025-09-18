@@ -3,45 +3,159 @@ import {
   View,
   Text,
   TextInput,
-  ScrollView,
+  FlatList,
   Pressable,
   StyleSheet,
   Platform,
   Animated,
   Appearance,
-  Dimensions,
   Image,
+  KeyboardAvoidingView,
+  SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import rid from '../components/functions/RandomIDGenerator';
-import { height } from '../components/constants';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons'; // Added FontAwesome5 for icons
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width, height } = Dimensions.get('window');
+
+// --- Animated Message Bubble ---
+class Bubble extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.slideAnim = new Animated.Value(20);
+    this.opacityAnim = new Animated.Value(0);
+  }
+
+  componentDidMount() {
+    Animated.parallel([
+      Animated.timing(this.slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(this.opacityAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
+  }
+
+  render() {
+    const { who, text, palette } = this.props;
+    const isMe = who === 'me';
+    return (
+      <Animated.View style={{ transform: [{ translateY: this.slideAnim }], opacity: this.opacityAnim }}>
+        <View style={[S.row, { justifyContent: isMe ? 'flex-end' : 'flex-start', paddingHorizontal: 16 }]}>
+          <View style={[S.bubble, isMe ? { backgroundColor: palette.primary } : { backgroundColor: palette.ghost }]}>
+            <Text style={[S.body, { color: isMe ? '#fff' : palette.text }]}>{text}</Text>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  }
+}
+
+// --- Intro Overlay Component ---
+function IntroOverlay({ palette, showIntro, onHide }) {
+  const overlayOpacity = useRef(new Animated.Value(1)).current;
+  const overlayTranslateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!showIntro) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(overlayTranslateY, {
+          toValue: height, // Slide down out of view
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        onHide(); // Call onHide after animation completes
+      });
+    }
+  }, [showIntro]);
+
+  if (!showIntro) return null; // Only render when showIntro is true
+
+  return (
+    <Animated.View
+      style={[
+        StyleSheet.absoluteFillObject,
+        S.introOverlay,
+        {
+          opacity: overlayOpacity,
+          transform: [{ translateY: overlayTranslateY }],
+          backgroundColor: palette.introBg, // Using a distinct background for intro
+        },
+      ]}>
+      <Text style={[S.introTitle, { color: palette.text }]}>Welcome back! What's your intention today?</Text>
+
+      <View style={S.introButtonsContainer}>
+        <IntroActionButton icon="brain" label="Start 5-min Meditation" palette={palette} />
+        <IntroActionButton icon="book-open" label="Journal My Thoughts" palette={palette} />
+        <IntroActionButton icon="bolt" label="Quick Energy Boost" palette={palette} />
+        <IntroActionButton icon="calendar-alt" label="Plan Ahead" palette={palette} />
+      </View>
+
+      <View style={[S.moodTrackerCard, { backgroundColor: palette.card }]}>
+        <Text style={[S.moodTrackerTitle, { color: palette.text }]}>Want to log your mood or try a 1-minute breathing exercise?</Text>
+        <View style={S.moodIconsContainer}>
+          {['smile', 'meh', 'frown', 'sad-tear', 'angry'].map((icon, index) => (
+            <Pressable key={index} style={S.moodIconWrapper}>
+              <FontAwesome5 name={icon} size={28} color={palette.icon} />
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={[S.breatheExerciseCard, { backgroundColor: palette.card }]}>
+        <Text style={[S.breatheText, { color: palette.text }]}>Inhale... Exhale...</Text>
+        <View style={S.breathingSphere}>
+          {/* Animated sphere for breathing */}
+          <Animated.View
+            style={[
+              S.sphereInner,
+              {
+                backgroundColor: palette.primary,
+                transform: [
+                  {
+                    scale: overlayTranslateY.interpolate({
+                      inputRange: [0, height],
+                      outputRange: [1, 0.5], // Shrinks as it fades out
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
+        </View>
+        <Text style={[S.breatheTimer, { color: palette.text }]}>0:30</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function IntroActionButton({ icon, label, palette }) {
+  return (
+    <Pressable style={[S.introActionBtn, { borderColor: palette.border, backgroundColor: palette.ghost }]}>
+      <FontAwesome5 name={icon} size={14} color={palette.text} style={{ marginRight: 6 }} />
+      <Text style={{ color: palette.text, fontSize: 13 }}>{label}</Text>
+    </Pressable>
+  );
+}
+
 
 export default function Chatscreen() {
-
-  const onLayoutAnchor = (id, y) => (anchors.current[id] = y);
-  const inputRef = useRef(null);
-  const anchors = useRef({});
-  const navigation = useNavigation();
-  const [text, setText] = useState('');
-  const scrollRef = useRef(null);
-
-
-  const [ventMode, setVentMode] = useState(false);
-  const [theme] = useState(Appearance.getColorScheme() || 'light');
+  const [messages, setMessages] = useState([]);
   const [isTypingBot, setIsTypingBot] = useState(false);
+  const [theme] = useState(Appearance.getColorScheme() || 'light');
   const isDark = theme === 'dark';
   const palette = isDark ? D : L;
+  const flatListRef = useRef(null);
+  const [showIntro, setShowIntro] = useState(true); // Control intro visibility
+  const [renderIntro, setRenderIntro] = useState(true); // Control if intro is mounted
 
-  const [messages, setMessages] = useState([
-    {
-      id: rid(),
-      who: 'bot',
-      text: 'Welcome back! Want a 1‑minute breathing exercise or to log your mood?',
-      ts: Date.now() - 10000,
-    },
-  ]);
-
+  // --- Reusable Animated Pressable ---
   function APressable({ children, style, onPress }) {
     const scale = useRef(new Animated.Value(1)).current;
     return (
@@ -49,257 +163,257 @@ export default function Chatscreen() {
         onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
         onPress={onPress}
-        style={({ pressed }) => [style, { opacity: pressed ? 0.95 : 1, transform: [{ scale }] }]}>
+        style={[{ transform: [{ scale }] }, style]}>
         {children}
       </Pressable>
     );
   }
 
-  function Bubble({ who, children, palette }) {
-    const isMe = who === 'me';
-    return (
-      <View style={[S.row, { justifyContent: isMe ? 'flex-end' : 'flex-start', paddingHorizontal: 16 }]}>
-        <View style={[S.bubble, isMe ? { backgroundColor: palette.primary } : { backgroundColor: palette.ghost, borderColor: palette.border }, !isMe && { borderWidth: StyleSheet.hairlineWidth }]}>
-          <Text style={[S.body, { color: isMe ? '#fff' : palette.text }]}>{children}</Text>
-        </View>
-      </View>
-    );
-  }
-
-  function GhostButton({ children, onPress, palette }) {
-    return (
-      <APressable onPress={onPress} style={[S.outlineBtn, { borderColor: palette.border, backgroundColor: palette.ghost }]}>
-        <Text style={{ color: palette.text }}>{children}</Text>
-      </APressable>
-    );
-  }
-
-
-  function sendBot(text) {
-    const msg = { id: rid(), who: 'bot', text, ts: Date.now() };
-    setMessages(m => [...m, msg]);
-  }
-
-  function smartReply(text) {
-    if (ventMode) {
-      return sendBot("I'm here. Tell me everything on your mind. I’m listening without judgment.");
-    }
-    const t = text.toLowerCase();
-    if (t.includes('panic') || t.includes('anxious') || t.includes('anxiety')) {
-      sendBot('Let’s do a 1‑minute box breathing to steady things. Opening the breathe tool now…');
-      setBreatheOpen(true);
-      return;
-    }
-    if (t.includes('plan') || t.includes('schedule') || t.includes('study')) {
-      return sendBot('Here’s a gentle plan: 1) 1‑min breathe, 2) 25‑min focus block, 3) 5‑min walk. Want me to add these to Today’s Plan?');
-    }
-    if (t.includes('help') || t.includes('crisis')) {
-      return sendBot('If you’re in immediate danger, call your local emergency number (India: 112). I can also connect you to Kiran 1800‑599‑0019.');
-    }
-    if (t.includes('journal') || t.includes('write')) {
-      setJournalOpen(true);
-      return sendBot('Opened your journal with a fresh prompt. Take your time.');
-    }
-    return sendBot('Got it. Would you prefer suggestions, or just Vent Mode for a bit?');
-  }
-
+  // --- New Animated Typing Indicator ---
   function TypingHint({ palette }) {
-    const fade = useRef(new Animated.Value(0.4)).current;
+    const animValues = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
     useEffect(() => {
-      Animated.loop(
+      const animations = animValues.map(val =>
         Animated.sequence([
-          Animated.timing(fade, { toValue: 1, duration: 700, useNativeDriver: false }),
-          Animated.timing(fade, { toValue: 0.4, duration: 700, useNativeDriver: false }),
+          Animated.timing(val, { toValue: -4, duration: 400, useNativeDriver: true }),
+          Animated.timing(val, { toValue: 0, duration: 400, useNativeDriver: true }),
         ])
-      ).start();
+      );
+      const loop = Animated.stagger(200, animations);
+      Animated.loop(loop).start();
     }, []);
+
     return (
-      <View style={[S.row, { alignItems: 'center', gap: 8, paddingLeft: 6 }]}>
-        <Animated.Text style={[S.meta, { color: palette.muted, opacity: fade }]}>Calm Pulse is typing</Animated.Text>
-        <View style={[S.row, { gap: 4 }]}>
-          {[0, 1, 2].map(i => (
-            <Animated.View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.muted, transform: [{ translateY: new Animated.Value(0) }] }} />
+      <View style={[S.row, { alignItems: 'center', gap: 8, paddingLeft: 16, marginBottom: 8 }]}>
+        <View style={S.row}>
+          {animValues.map((val, i) => (
+            <Animated.View key={i} style={[S.typingDot, { backgroundColor: palette.muted, transform: [{ translateY: val }] }]} />
           ))}
         </View>
-      </View>
-    );
-  }
-  function GradientCard({ children, palette, onLayout }) {
-    return (
-      <View onLayout={onLayout} style={[S.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
-        {children}
+        <Text style={[S.meta, { color: palette.muted }]}>Calm Pulse is typing</Text>
       </View>
     );
   }
 
-  // Scroll to the bottom when new messages are added
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollToEnd({ animated: true });
-    }
-  }, [messages]);
-
+  // --- Logic for Sending Messages ---
   function sendUser(text) {
+    if (!text.trim()) return;
+    setMessages(m => [...m, { id: rid(), who: 'me', text: text.trim() }]);
     setIsTypingBot(true);
+
+    if (showIntro) {
+      setShowIntro(false); // Hide intro when first message is sent
+    }
+
     setTimeout(() => {
-      if (!text.trim()) return;
-      const msg = { id: rid(), who: 'me', text: text.trim(), ts: Date.now() };
-      setMessages(m => [...m, msg]);
-      smartReply(text.trim());
-      setIsTypingBot(false)
+      sendBot('Got it. Would you prefer suggestions, or just Vent Mode for a bit?');
+      setIsTypingBot(false);
     }, 1500);
   }
 
-  const handleSend = () => {
-    if (!text.trim()) return;
-    const newMessage = { id: Math.random().toString(), who: 'me', text: text.trim() };
-    setMessages(prev => [...prev, newMessage]);
-    setText('');
+  function sendBot(text) {
+    setMessages(m => [...m, { id: rid(), who: 'bot', text }]);
+  }
 
-    // Simulate a bot reply
-    setTimeout(() => {
-      const botReply = { id: Math.random().toString(), who: 'bot', text: 'Thank you for sharing. I am here to listen.' };
-      setMessages(prev => [...prev, botReply]);
-    }, 1000);
-  };
-
-  function ChatCard({ messages, onSend, onLayout, palette }) {
+  // --- Main Chat Input Component ---
+  function ChatInput({ onSend, palette }) {
     const [text, setText] = useState('');
-    const boxRef = useRef(null);
-    useEffect(() => {
-      setTimeout(() => boxRef.current?.scrollToEnd({ animated: true }), 50);
-    }, [messages]);
-    function submit() { onSend(text); setText(''); }
+    const submit = () => {
+      if (!text.trim()) return;
+      onSend(text);
+      setText('');
+    };
+
     return (
-      <GradientCard palette={palette} onLayout={onLayout}>
-        <ScrollView ref={boxRef} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
-          {messages.map(m => (<Bubble key={m.id} who={m.who} palette={palette}>{m.text}</Bubble>))}
-        </ScrollView>
-        {
-          isTypingBot &&
-          <TypingHint palette={palette} />
-        }
-        <View style={[S.row, { gap: 8, marginTop: 12 }]}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            onSubmitEditing={submit}
-            placeholder="Type a message…"
-            placeholderTextColor={palette.muted}
-            style={[S.input, { borderColor: palette.border, backgroundColor: palette.glass, color: palette.text }]} />
-          {/* <APressable onPress={submit} style={[S.sendBtn]}>
-            <Text style={S.primaryBtnText}>Send</Text>
-          </APressable> */}
-          {text.trim().length > 0 && <GhostButton onPress={submit} palette={palette}>Send</GhostButton>}
-        </View>
-        <View style={[S.row, { gap: 8, marginTop: 8 }]}>
-          {['✨ 1‑min Breathe', '📋 Plan my day'].map(txt => (
-            <GhostButton key={txt} palette={palette}>{txt}</GhostButton>
-          ))}
-        </View>
-      </GradientCard>
+      <View style={[S.inputContainer, { borderTopColor: palette.border }]}>
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          onSubmitEditing={submit}
+          placeholder="Type a message…"
+          placeholderTextColor={palette.muted}
+          style={[S.input, { borderColor: palette.border, backgroundColor: palette.ghost, color: palette.text }]}
+        />
+        <APressable onPress={submit} style={[S.sendBtn, { backgroundColor: palette.primary }]}>
+          <MaterialIcons name="send" size={20} color="#fff" />
+        </APressable>
+      </View>
     );
   }
 
   return (
-    <View style={[S.flex, { backgroundColor: palette.appBg }]}>
-      <View style={[S.headerWrap, { borderBottomColor: palette.border, backgroundColor: palette.glass }]}>
-        <View style={[S.rowBetween, { paddingHorizontal: 16 }]}>
-          <View
-            style={[S.row, { paddingHorizontal: 8, gap: 8 }]}
-          >
-            <Image style={S.logoBlob} source={require("../assets/logo.png")} />
-            <Text style={[S.smallBold, { color: palette.text }]}>Calm Pulse</Text>
-          </View>
-
-          <View style={[S.rowBetween, { justifyContent: "space-evenly", gap: 16 }]}>
-            <GhostButton palette={palette}>🎙️ Voice Mode</GhostButton>
-            <APressable style={[S.primaryBtn, { backgroundColor: '#f43f5e', paddingVertical: 8 }]}>
+    <SafeAreaView style={[S.flex, { backgroundColor: palette.appBg }]}>
+      <KeyboardAvoidingView
+        style={S.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}>
+        <View style={S.flex}>
+          <View style={[S.headerWrap, { borderBottomColor: palette.border }]}>
+            <View style={[S.row, { gap: 8 }]}>
+              <Image style={S.logoBlob} source={require("../assets/logo.png")} />
+              <Text style={[S.smallBold, { color: palette.text }]}>Calm Pulse</Text>
+            </View>
+            <APressable style={[S.endChatBtn, { backgroundColor: '#f43f5e' }]}>
               <Text style={S.primaryBtnText}>End Chat</Text>
             </APressable>
           </View>
+
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <Bubble who={item.who} text={item.text} palette={palette} />}
+            contentContainerStyle={{ gap: 12, paddingTop: 12, paddingBottom: 12 }}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          />
+
+          {isTypingBot && <TypingHint palette={palette} />}
+          <ChatInput onSend={sendUser} palette={palette} />
         </View>
-      </View>
-      <ChatCard
-        palette={palette}
-        onLayout={e => onLayoutAnchor('chat', e.nativeEvent.layout.y)}
-        messages={messages}
-        onSend={sendUser}
-      />
-    </View>
+
+        {renderIntro && <IntroOverlay palette={palette} showIntro={showIntro} onHide={() => setRenderIntro(false)} />}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
+// --- Color Palettes ---
 const L = {
-  appBg: '#f8fafc', text: '#0f172a', muted: '#64748b', border: 'rgba(2,6,23,0.12)', card: 'rgba(255,255,255,0.9)', ghost: 'rgba(248,250,252,0.9)', glass: 'rgba(255,255,255,0.7)', primary: '#6366f1',
+  appBg: '#f7f9fc',
+  introBg: 'linear-gradient(135deg, #a7b7ff, #ffc7d4)', // Placeholder for gradient, use expo-linear-gradient for actual
+  text: '#1c2a4d',
+  muted: '#8d9fbd',
+  border: '#e8edf5',
+  ghost: '#f0f4f9',
+  card: '#ffffff',
+  primary: '#5a67d8',
+  icon: '#5a67d8',
+  introGradientColors: ['#A7B7FF', '#FFC7D4'],
 };
 const D = {
-  appBg: '#0b1220', text: '#e5edff', muted: '#93a4c8', border: 'rgba(255,255,255,0.12)', card: 'rgba(10,14,30,0.9)', ghost: 'rgba(15,23,42,0.7)', glass: 'rgba(2,6,23,0.6)', primary: '#7dd3fc',
+  appBg: '#121a2c',
+  introBg: 'linear-gradient(135deg, #4a3a7f, #8c5a8c)', // Placeholder for gradient
+  text: '#e6efff',
+  muted: '#7a8bb8',
+  border: '#2a3b5c',
+  ghost: '#222e4d',
+  card: '#1a243d',
+  primary: '#7a9dff',
+  icon: '#e6efff',
+  introGradientColors: ['#4A3A7F', '#8C5A8C'],
 };
 
+// --- Styles ---
 const S = StyleSheet.create({
-  flex: { flex: 1, height: height },
+  flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center' },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerWrap: {
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingTop: Platform.OS === 'ios' ? 50 : 10,
+    backgroundColor: 'transparent', // Make header transparent to show introBg if visible
   },
-  logoBlob: { width: 40, height: 40, borderRadius: 64 },
-  inputArea: {
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 12,
-  },
-  body: { fontSize: 15, lineHeight: 22 },
-  smallBold: { fontSize: 16, fontWeight: '700' },
-  primaryBtn: {
+  logoBlob: { width: 40, height: 40, borderRadius: 20 },
+  body: { fontSize: 16, lineHeight: 24 },
+  smallBold: { fontSize: 18, fontWeight: '700' },
+  primaryBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  sendBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  endChatBtn: {
     paddingHorizontal: 16,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  sendBtn: {
-    paddingHorizontal: 16,
-    height: 44,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    borderColor: "#FFF",
-    borderWidth: 2
-  },
-  bubble: {
-    maxWidth: '85%',
+    height: 40,
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  outlineBtn: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12
+  bubble: { maxWidth: '85%', borderRadius: 22, paddingHorizontal: 18, paddingVertical: 12 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderTopWidth: 1 },
+  input: { height: 48, borderWidth: 1, borderRadius: 24, paddingHorizontal: 18, flex: 1 },
+  meta: { fontSize: 13, color: '#93a4c8' },
+  typingDot: { width: 7, height: 7, borderRadius: 4, marginHorizontal: 2 },
+
+  // --- Intro Overlay Styles ---
+  introOverlay: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    zIndex: 10, // Ensure it's on top
   },
-  h6: { fontSize: 16, fontWeight: '700' },
-
-  card: { flex: 1, borderRadius: 24, padding: 12, shadowOpacity: 0.08, shadowRadius: 8 },
-
-  primaryBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999 },
-  primaryBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-
-  input: { height: 75, borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, paddingHorizontal: 12, paddingVertical: Platform.OS === 'ios' ? 10 : 8, flex: 1 },
-
-  fabs: { position: 'absolute', left: 16, right: 16, bottom: 16, flexDirection: 'row', justifyContent: 'space-between' },
-  fab: { borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 },
-  fabText: { color: '#fff', fontWeight: '600' },
-
-  bubble: { maxWidth: '85%', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8 },
+  introTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 40,
+    marginTop: -80, // Adjust to center vertically
+  },
+  introButtonsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 30,
+  },
+  introActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  moodTrackerCard: {
+    width: '90%',
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  moodTrackerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  moodIconsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  moodIconWrapper: {
+    padding: 8,
+    borderRadius: 30,
+    // Add background or hover effects if desired
+  },
+  breatheExerciseCard: {
+    width: '90%',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  breatheText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  breathingSphere: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    overflow: 'hidden', // Ensures inner sphere stays within bounds
+  },
+  sphereInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
+  },
+  breatheTimer: {
+    fontSize: 16,
+    marginTop: 10,
+  },
 });
