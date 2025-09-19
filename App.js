@@ -19,8 +19,7 @@ import Homescreen from './screens/Homescreen';
 import { height, width } from './components/constants';
 import AlertCenter from './components/AlertCenter';
 import OnboardingQuestions from './screens/OnboardingQuestions';
-import Chatscreen from './screens/Chatscreen'
-
+import ChatScreen from './screens/ChatScreen'
 registerTranslation('en-GB', enGB);
 
 const Stack = createNativeStackNavigator();
@@ -71,7 +70,7 @@ function AppInner() {
           <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Homescreen" component={Homescreen} options={{ headerShown: false }} />
           <Stack.Screen name="OnboardingQuestions" component={OnboardingQuestions} options={{ headerShown: false }} />
-          <Stack.Screen name="Chatscreen" component={Chatscreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </TokensThemeProvider>
