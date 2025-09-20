@@ -29,6 +29,8 @@ export default function Login() {
   const spacing = theme.spacing ?? {};
   const radius = theme.radius ?? {};
 
+  const [isRemember, setIsRemember] = useState(false);
+
   // spacing/radius fallbacks so missing keys never crash
   const S = {
     xs: spacing.xs ?? 6,
@@ -51,7 +53,7 @@ export default function Login() {
       ...(Platform.OS === 'android' ? { elevation: 6 } : null),
     };
 
-  const [email, setEmail] = useState('');
+  const [Username, setUsername] = useState('');
   const [pw, setPw] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,14 @@ export default function Login() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      nav.navigate('Homescreen');
+
+      if (Username == "user" && pw == "user1234") {
+        isRemember && localStorage.setItem("isLoggedIn", "true");
+        nav.navigate('Homescreen');
+      }
+      else {
+        alert("Invalid Username or pass");
+      }
     }, 2000);
   };
 
@@ -171,6 +180,8 @@ export default function Login() {
       flex: 1,
       ...(type.input ?? { fontSize: 14 }),
       color: color.text ?? (isDark ? '#e5e7eb' : '#0f172a'),
+      height: "100%",
+      paddingHorizontal: 5,
     },
     rowBetween: {
       flexDirection: 'row',
@@ -255,12 +266,12 @@ export default function Login() {
             <Ionicons name="log-in-outline" size={20} color={isDark ? '#e5e7eb' : '#111827'} />
           </View>
 
-          <Text style={styles.title}>Sign in with email</Text>
+          <Text style={styles.title}>Sign in with Username</Text>
           <Text style={styles.sub}>
-            Make a new doc to bring your words, data, and teams together. For free
+            Welcome back! Please enter your details to continue.
           </Text>
 
-          {/* Email */}
+          {/* Username */}
           <View style={styles.inputRow}>
             <Ionicons
               name="mail-outline"
@@ -269,12 +280,13 @@ export default function Login() {
               style={{ marginRight: 8 }}
             />
             <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
+              value={Username}
+              onChangeText={setUsername}
+              placeholder="Username"
               placeholderTextColor={isDark ? '#8A94A7' : '#94A3B8'}
               style={styles.input}
-              keyboardType="email-address"
+              keyboardType="default"
+              textContentType='username'
               autoCapitalize="none"
             />
           </View>
@@ -304,12 +316,19 @@ export default function Login() {
               />
             </Pressable>
           </View>
-
           <View style={styles.rowBetween}>
-            <View />
-            <Pressable onPress={() => nav.navigate('ForgotPassword')}>
-              <Text style={styles.link}>Forgot password?</Text>
-            </Pressable>
+            <View style={styles.rowBetween}>
+              <View />
+              <Pressable onPress={() => setIsRemember(r => !r)}>
+                <Text style={styles.link}>{`[${isRemember ? "*" : " "}] Remember Me!`}</Text>
+              </Pressable>
+            </View>
+            <View style={styles.rowBetween}>
+              <View />
+              <Pressable onPress={() => nav.navigate('ForgotPassword')}>
+                <Text style={styles.link}>Forgot password?</Text>
+              </Pressable>
+            </View>
           </View>
 
           <Pressable

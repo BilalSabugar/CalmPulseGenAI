@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { width } from '../components/constants';
+import userAuth from '../components/functions/userAuth';
 
 // --- ADD THIS AT THE TOP ---
 // Change this value to scale the entire content of the screen.
@@ -30,6 +31,8 @@ export default function WelcomeScreen() {
   const { width, height } = useWindowDimensions();
   const isDesktop = width > height; // orientation-based rule
   const isDark = themeChoice === 'dark' || (themeChoice === 'system' && systemColorScheme === 'dark');
+  const [Username, setUsername] = useState('');
+  const [passcode, setPasscode] = useState('');
 
   const navigation = useNavigation()
   // Persist + bootstrap theme
@@ -329,14 +332,30 @@ export default function WelcomeScreen() {
               <Text style={[S.tiny, { color: C.body, marginTop: 4 * CONTENT_SCALE }]}>No email required. Create a passcode to keep your space private.</Text>
 
               <View style={{ marginTop: 10 * CONTENT_SCALE }}>
-                <Text style={[S.tinyBold, { color: C.fg }]}>Nickname</Text>
-                <TextInput placeholder="e.g., SkyWalker" placeholderTextColor={C.placeholder} style={[S.input, { color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]} />
+                <Text style={[S.tinyBold, { color: C.fg }]}>Username</Text>
+                <TextInput
+                  value={Username}
+                  onChangeText={(u) => setUsername(u)}
+                  placeholder="e.g., SkyWalker"
+                  placeholderTextColor={C.placeholder}
+                  style={[S.input, { color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]}
+                />
               </View>
               <View style={{ marginTop: 10 * CONTENT_SCALE }}>
-                <Text style={[S.tinyBold, { color: C.fg }]}>4‑digit passcode</Text>
-                <TextInput placeholder="••••" placeholderTextColor={C.placeholder} secureTextEntry style={[S.input, { letterSpacing: 4 * CONTENT_SCALE, color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]} />
+                <Text style={[S.tinyBold, { color: C.fg }]}>Passcode</Text>
+                <TextInput
+                  value={passcode}
+                  onChangeText={(p) => setPasscode(p)}
+                  placeholder="••••••"
+                  maxLength={6}
+                  textContentType='password'
+                  keyboardType='numeric'
+                  placeholderTextColor={C.placeholder}
+                  secureTextEntry
+                  style={[S.input, { letterSpacing: 4 * CONTENT_SCALE, color: C.fg, borderColor: C.border, backgroundColor: C.inputBg }]}
+                />
               </View>
-              <PrimaryButton label="Enter Calm Space" onPress={() => { }} style={{ marginTop: 10 * CONTENT_SCALE }} />
+              <PrimaryButton label="Enter Calm Space" onPress={() => { userAuth(Username, passcode).then((user) => user && navigation.navigate('Homescreen')) }} style={{ marginTop: 10 * CONTENT_SCALE }} />
               <Text style={[S.caption, { color: C.subtle, marginTop: 6 * CONTENT_SCALE }]}>By continuing you agree to the community care rules.</Text>
             </View>
           </View>
