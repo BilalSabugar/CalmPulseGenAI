@@ -35,6 +35,7 @@ import {
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import logoutUser from "../components/functions/Logout";
+import { API_KEY, API_URL, createSystemInstruction } from "../components/functions/Chat_backend";
 
 /** =========================
  * THEME
@@ -137,26 +138,8 @@ const TRANSLATIONS = {
   },
 };
 
-/** =========================
- * API (Gemini-compatible)
- * ========================== */
-const API_KEY = "AIzaSyAhfxxvg63W6jAmuq4CvCqQTB4KGXOerUk"; // <== add your key
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 
-const SYSTEM_INSTRUCTION = {
-  role: "model",
-  parts: [
-    {
-      text:
-        "You are Calm Pulse, a friendly and empathetic AI companion focused on mental well-being, mindfulness, and self-reflection. Your primary goal is to provide a safe, non-judgmental space for users to explore their thoughts and feelings. Engage in a gentle, supportive, and calming tone. Guide users with thoughtful questions, offer simple mindfulness exercises (like breathing techniques), and encourage positive self-talk. Avoid giving medical advice, but be a compassionate listener. Keep your responses concise and easy to understand.",
-    },
-  ],
-};
-
-async function callModel(history, prompt) {
-  if (!API_KEY) {
-    return "API key is not set. Please add your Gemini API key in the source.";
-  }
+async function callModel(history, prompt, user) {
   const formatted = {
     contents: [
       ...history.map((m) => ({
@@ -165,9 +148,9 @@ async function callModel(history, prompt) {
       })),
       { role: "user", parts: [{ text: prompt }] },
     ],
-    systemInstruction: SYSTEM_INSTRUCTION,
+    systemInstruction: createSystemInstruction(user),
   };
-  const res = await fetch(`${API_URL}?key=${API_KEY}`, {
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(formatted),
@@ -218,20 +201,21 @@ function useAnimatedGradient() {
 /** =========================
  * MAIN APP
  * ========================== */
-export default function App() {
+export default function ChatScreen() {
   const orientation = useOrientation();
   const [scheme, setScheme] = useState("light");
   const [lang, setLang] = useState("EN");
   const T = TRANSLATIONS[lang];
   const P = PALETTE[scheme];
 
-  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile slide-in
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const [enterIsSend, setEnterIsSend] = useState(false);
 
   const [input, setInput] = useState("");
+  const [user, setUser] = useState();
   const [inputHeight, setInputHeight] = useState(44);
   const [history, setHistory] = useState([]);
   const [typing, setTyping] = useState(false);
@@ -244,9 +228,11 @@ export default function App() {
       const s = await AsyncStorage.getItem("cp_theme");
       const l = await AsyncStorage.getItem("cp_lang");
       const c = await AsyncStorage.getItem("e_is_s");
+      const u = JSON.parse(await AsyncStorage.getItem("user"));
       if (s) setScheme(s);
       if (l) setLang(l);
-      if (c) setEnterIsSend(c === "true");
+      if (c) setEnterIsSend(c);
+      if (u) setUser(u);
     })();
   }, []);
 
@@ -295,7 +281,7 @@ export default function App() {
     setInput("");
     setTyping(true);
     try {
-      const res = await callModel(history, prompt);
+      const res = await callModel(history, prompt, user);
       const isSummary = /summarize this conversation/i.test(prompt) || /one-paragraph summary/i.test(prompt);
       appendMessage({
         role: "assistant",

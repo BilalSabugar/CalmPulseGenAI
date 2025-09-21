@@ -1,4 +1,3 @@
-// screens/Check.jsx
 import React, { Component } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,12 +27,10 @@ export default class Check extends Component {
 
   bootstrap = async () => {
     try {
-      const entries = await AsyncStorage.multiGet([ 'isLoggedIn', 'Username' ]);
+      const entries = await AsyncStorage.multiGet(['isLoggedIn', 'user']);
       const map = Object.fromEntries(entries);
-      const Username = (map.Username || '').trim().toLowerCase();
-      console.log('Check: bootstrap', map);
-
-      // consider either flag as valid login
+      const user = map.user ? JSON.parse(map.user) : null;
+      const Username = (user.username || '').trim().toLowerCase();
       const loggedIn = map.isLoggedIn == 'true';
 
       if (!loggedIn) {

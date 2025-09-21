@@ -1,6 +1,6 @@
 import 'react-native-reanimated';
 import React, { useEffect, useState, Suspense } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
@@ -17,9 +17,9 @@ import Register from './screens/Register';
 import WelcomeScreen from './screens/WelcomeScreen';
 import Homescreen from './screens/Homescreen';
 import { height, width } from './components/constants';
-import AlertCenter from './components/AlertCenter';
 import OnboardingQuestions from './screens/OnboardingQuestions';
 import ChatScreen from './screens/ChatScreen'
+import AboutUs from './screens/AboutUs';
 registerTranslation('en-GB', enGB);
 
 const Stack = createNativeStackNavigator();
@@ -54,7 +54,6 @@ function AppInner() {
     <TokensThemeProvider mode={tokensMode}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NavigationContainer linking={linking}>
-        <AlertCenter />
         <Stack.Navigator
           initialRouteName="Check"
           screenOptions={{
@@ -64,12 +63,15 @@ function AppInner() {
             animation: 'fade',
           }}
         >
+          
           {/* Auth */}
           <Stack.Screen name="Check" component={Check} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
+
           {/* Pages */}
           <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="AboutUs" component={AboutUs} options={{ headerShown: false }} />
           <Stack.Screen name="Homescreen" component={Homescreen} options={{ headerShown: false }} />
           <Stack.Screen name="OnboardingQuestions" component={OnboardingQuestions} options={{ headerShown: false }} />
           <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ headerShown: false }} />

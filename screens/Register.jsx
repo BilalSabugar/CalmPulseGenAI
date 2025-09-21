@@ -1,4 +1,3 @@
-// screens/Register.js
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -21,7 +20,6 @@ export default function Register() {
   const nav = useNavigation();
   const { isDark } = useThemeMode();
 
-  // ---- Theme tokens with safe fallbacks ----
   const theme = useTheme?.() ?? {};
   const color = theme.color ?? {};
   const type = theme.type ?? {};
@@ -50,7 +48,6 @@ export default function Register() {
       ...(Platform.OS === 'android' ? { elevation: 6 } : null),
     };
 
-  // ---- Local state ----
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -58,7 +55,6 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ---- Entrance + glow animations ----
   const fade = useRef(new Animated.Value(0)).current;
   const y = useRef(new Animated.Value(16)).current;
   const glow = useRef(new Animated.Value(0)).current;
@@ -78,18 +74,15 @@ export default function Register() {
     ]).start();
   }, [fade, y, glow]);
 
-  // ---- Handlers ----
   const handleRegister = () => {
     if (loading) return;
     setLoading(true);
-    // fake work / API call
     setTimeout(() => {
       setLoading(false);
       nav.navigate('OnboardingQuestions');
     }, 2000);
   };
 
-  // ---- Styles ----
   const styles = StyleSheet.create({
     root: {
       flex: 1,
@@ -270,7 +263,6 @@ export default function Register() {
             Start your calm journey — your words and data stay private.
           </Text>
 
-          {/* Name */}
           <View style={styles.inputRow}>
             <Ionicons
               name="person-outline"
@@ -307,7 +299,6 @@ export default function Register() {
             />
           </View>
 
-          {/* Password */}
           <View style={styles.inputRow}>
             <Ionicons
               name="lock-closed-outline"
@@ -333,7 +324,6 @@ export default function Register() {
             </Pressable>
           </View>
 
-          {/* Confirm Password */}
           <View style={styles.inputRow}>
             <Ionicons
               name="lock-closed-outline"

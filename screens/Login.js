@@ -22,7 +22,6 @@ export default function Login() {
   const nav = useNavigation();
   const { isDark } = useThemeMode();
 
-  // Pull tokens (with safe fallbacks)
   const theme = useTheme?.() ?? {};
   const color = theme.color ?? {};
   const type = theme.type ?? {};
@@ -34,7 +33,6 @@ export default function Login() {
 
   const [isRemember, setIsRemember] = useState(false);
 
-  // spacing/radius fallbacks so missing keys never crash
   const S = {
     xs: spacing.xs ?? 6,
     sm: spacing.sm ?? 8,
@@ -61,7 +59,6 @@ export default function Login() {
   const [showpasscode, setShowpasscode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // entrance + glow
   const fade = useRef(new Animated.Value(0)).current;
   const y = useRef(new Animated.Value(16)).current;
   const glow = useRef(new Animated.Value(0)).current;
@@ -240,7 +237,6 @@ export default function Login() {
     },
   });
 
-  // Animated opacity for glow (cannot live inside StyleSheet)
   const glowOpacity = glow.interpolate
     ? glow.interpolate({ inputRange: [0, 1], outputRange: [0.06, 0.18] })
     : 0.12;

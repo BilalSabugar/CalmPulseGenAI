@@ -1,12 +1,6 @@
-// Centralized theme system for React Native
-// API: ThemeProvider, useTheme, useThemeMode, createStyles, variants
-
 import React from "react";
 import { StyleSheet, useColorScheme } from "react-native";
 
-/* =========
-   Tokens
-========= */
 const COLORS = {
   light: {
     background: "#FFFFFF",
@@ -15,7 +9,7 @@ const COLORS = {
     text: "#0F172A",
     textDim: "#64748B",
     border: "#E2E8F0",
-    primary: "#4F46E5", // indigo-600
+    primary: "#4F46E5",
     primaryText: "#FFFFFF",
     ghost: "#F1F5F9",
     placeholder: "#94A3B8",
@@ -28,7 +22,7 @@ const COLORS = {
     text: "#E5E7EB",
     textDim: "#94A3B8",
     border: "#1F2937",
-    primary: "#60A5FA", // sky-400
+    primary: "#60A5FA",
     primaryText: "#0B1220",
     ghost: "rgba(30,41,59,0.7)",
     placeholder: "#64748B",
@@ -68,20 +62,12 @@ const ELEVATION = {
   raised: 6,
 };
 
-/* =========
-   Theme Context
-========= */
 const ThemeCtx = React.createContext(null);
 
-/**
- * ThemeProvider
- * mode: "light" | "dark" | "system"
- */
 export function ThemeProvider({ mode: modeProp = "system", children }) {
-  const sys = useColorScheme(); // "light" | "dark" | null
+  const sys = useColorScheme();
   const [mode, setMode] = React.useState(modeProp);
 
-  // If caller changes the prop we sync once
   React.useEffect(() => setMode(modeProp), [modeProp]);
 
   const resolvedMode = mode === "system" ? (sys ?? "light") : mode;
@@ -104,15 +90,12 @@ export function ThemeProvider({ mode: modeProp = "system", children }) {
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
 
-/* =========
-   Hooks
-========= */
 export function useTheme() {
   const ctx = React.useContext(ThemeCtx);
   if (!ctx) {
     throw new Error("useTheme must be used within ThemeProvider");
   }
-  return ctx; // { theme, mode, setMode }
+  return ctx;
 }
 
 export function useThemeMode() {
@@ -120,20 +103,12 @@ export function useThemeMode() {
   return { mode: ctx.mode, setMode: ctx.setMode };
 }
 
-/**
- * createStyles(factory) — hook that returns a StyleSheet created from theme
- * usage: const s = createStyles(t => ({ container: { backgroundColor: t.color.background } }))
- */
 export function createStyles(factory) {
   const { theme } = useTheme();
-  // Allow factory to optionally return plain object or [object, inline]
   const stylesObj = factory(theme);
   return StyleSheet.create(stylesObj);
 }
 
-/* =========
-   Design Variants (re-usable pieces)
-========= */
 export function variants(t) {
   return {
     card: {

@@ -16,21 +16,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useThemeMode } from '../components/theme/ThemeProvider';
 import { sampleQuestions } from '../src/questions';
 
-let LottieView = null;
-
-try {
-    if (Platform.OS === 'web') {
-        const mod = require('lottie-react');         
-        LottieView = mod.default || mod;
-    } else {
-        const mod = require('lottie-react-native');    
-        LottieView = mod.default || mod;
-    }
-} catch (e) {
-    LottieView = null;
-}
-
-
 const HELP_TOPICS = [
     'Anxiety', 'Stress', 'Sleep', 'Confidence', 'Focus / Study',
     'Mood Swings', 'Relationships', 'Motivation', 'Habits', 'General Well-being',
@@ -210,17 +195,6 @@ export default function OnboardingQuestions() {
             {evaluating && (
                 <View style={styles.overlay}>
                     <View style={styles.overlayCard}>
-                        {LottieView ? (
-                            <LottieView
-                                source={require('../assets/lottie/understanding.json')}
-                                autoPlay
-                                loop
-                                style={{ width: 160, height: 160 }}
-                            />
-                        ) : (
-                            <ActivityIndicator size="large" color={c.brand} />
-                        )}
-
                         <Text style={styles.overlayText}>{phase}</Text>
                         <Text style={styles.overlayHint}>This may take a few moments…</Text>
                     </View>
