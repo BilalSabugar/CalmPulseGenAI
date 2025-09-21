@@ -30,6 +30,8 @@ export default function Login() {
   const spacing = theme.spacing ?? {};
   const radius = theme.radius ?? {};
 
+  const navigation = useNavigation();
+
   const [isRemember, setIsRemember] = useState(false);
 
   // spacing/radius fallbacks so missing keys never crash
@@ -85,13 +87,6 @@ export default function Login() {
     setTimeout(() => {
       setLoading(false);
       userAuth(Username, passcode).then((user) => user && navigation.navigate('Homescreen'))
-      // if (Username == "user" && passcode == "user1234") {
-      //   isRemember && localStorage.setItem("isLoggedIn", "true");
-      //   nav.navigate('Homescreen');
-      // }
-      // else {
-      //   alert("Invalid Username or pass");
-      // }
     }, 2000);
   };
 

@@ -34,6 +34,7 @@ import {
   LogOut,
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
+import logoutUser from "../components/functions/Logout";
 
 /** =========================
  * THEME
@@ -1006,9 +1007,7 @@ export default function App() {
               </Pressable>
               <Pressable
                 onPress={() => {
-                  // Simulate logout: reload-like behavior—clear state.
-                  setHistory([]);
-                  setConfirmOpen(false);
+                  logoutUser(navigation)
                 }}
                 style={{
                   flex: 1,

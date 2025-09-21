@@ -33,11 +33,13 @@ import {
   Sparkles,
   Siren,
   AlertTriangle,
+  LogOut
 } from "lucide-react-native";
 import { LineChart, ProgressChart } from "react-native-chart-kit";
 import isDesktop from "../components/functions/isDesktop";
 import { height } from "../components/constants";
 import { useNavigation } from "@react-navigation/native";
+import logoutUser from "../components/functions/Logout";
 
 // --- Theme ---
 type Scheme = "light" | "dark";
@@ -222,6 +224,25 @@ export default function Homescreen() {
               <Text style={{ fontWeight: "800", fontSize: 12, color: scheme === "light" ? "#1e3a8a" : C.indigo300 }}>💡 Tip</Text>
               <Text style={{ color: scheme === "light" ? C.indigo600 : C.indigo300, fontSize: 12, marginTop: 4 }}>Try 'Vent Mode' when you just want to be heard.</Text>
             </View>
+
+            <View style={{ gap: 8, marginVertical: 7, marginTop: 5 }}>
+              {[
+                { icon: <LogOut size={18} color="#FFF" />, label: "Log out", active: true },
+              ].map((item, i) => (
+                <Pressable
+                  key={i}
+                  style={{
+                    flexDirection: "row", alignItems: "center", gap: 12,
+                    paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10,
+                    backgroundColor: item.active ? (scheme === "light" ? C.red600 : C.indigo50) : "transparent",
+                  }}
+                  onPress={() => { logoutUser(navigation); }}
+                >
+                  {item.icon}
+                  <Text style={{ fontWeight: "600", color: "#FFF" }}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
         ) : null}
 
@@ -386,9 +407,6 @@ export default function Homescreen() {
                         <View style={{ marginTop: 12, gap: 6 }}>
                           <Pressable onPress={() => Linking.openURL("tel:112")}>
                             <Text style={{ fontSize: 13, fontWeight: "700", color: scheme === "light" ? "#991b1b" : "#fecaca" }}>India: 112</Text>
-                          </Pressable>
-                          <Pressable onPress={() => Linking.openURL("tel:18005990019")}>
-                            <Text style={{ fontSize: 13, fontWeight: "700", color: scheme === "light" ? "#991b1b" : "#fecaca" }}>Kiran: 1800-599-0019</Text>
                           </Pressable>
                         </View>
                       </View>

@@ -39,6 +39,8 @@ const linking = {
       ForgotPassword: 'forgot-password',
       WelcomeScreen: 'welcomescreen',
       Homescreen: 'dashboard',
+      OnboardingQuestions: 'onboardingquestions',
+      ChatScreen: 'chatscreen',
     },
   },
 };
@@ -66,7 +68,7 @@ function AppInner() {
           <Stack.Screen name="Check" component={Check} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={Register} options={{ headerShown: false }} />
-          {/* Landing Pages */}
+          {/* Pages */}
           <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Homescreen" component={Homescreen} options={{ headerShown: false }} />
           <Stack.Screen name="OnboardingQuestions" component={OnboardingQuestions} options={{ headerShown: false }} />

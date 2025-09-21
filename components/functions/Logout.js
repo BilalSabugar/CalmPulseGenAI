@@ -4,12 +4,8 @@ import { Platform } from "react-native";
 
 const logoutUser = async (navigation) => {
   try {
-    await AsyncStorage.multiSet([
-      ["isLogedIn", "false"],
-      ["Username", ""],
-    ]);
-
-    // 3) Navigation: reset stack to WelcomeScreen if available
+    await AsyncStorage.setItem("isLoggedIn", "false");
+    await AsyncStorage.removeItem("Username");
     if (navigation) {
       navigation.dispatch(
         CommonActions.reset({

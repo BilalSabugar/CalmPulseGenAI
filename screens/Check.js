@@ -2,12 +2,9 @@
 import React, { Component } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import isAdmin from '../utils/isAdmin';
 
-// Adjust these if your route names differ:
-const ADMIN_SCREEN = 'Admin';
 const USER_SCREEN = 'Homescreen';
-const LOGGED_OUT_SCREEN = 'WelcomeScreen'; // or 'Login'
+const LOGGED_OUT_SCREEN = 'WelcomeScreen';
 
 export default class Check extends Component {
   _isMounted = false;
@@ -31,20 +28,20 @@ export default class Check extends Component {
 
   bootstrap = async () => {
     try {
-      const entries = await AsyncStorage.multiGet(['isAutoLogin', 'isLoggedIn', 'email']);
+      const entries = await AsyncStorage.multiGet([ 'isLoggedIn', 'Username' ]);
       const map = Object.fromEntries(entries);
-      const email = (map.email || '').trim().toLowerCase();
+      const Username = (map.Username || '').trim().toLowerCase();
+      console.log('Check: bootstrap', map);
 
       // consider either flag as valid login
-      const loggedIn = map.isAutoLogin === 'true' || map.isLoggedIn === 'true';
+      const loggedIn = map.isLoggedIn == 'true';
 
       if (!loggedIn) {
         this.resetTo(LOGGED_OUT_SCREEN);
         return;
       }
 
-      const admin = await isAdmin(email);
-      this.resetTo(admin ? ADMIN_SCREEN : USER_SCREEN, { email });
+      this.resetTo(USER_SCREEN, { Username });
     } catch (err) {
       console.warn('Check: auth check failed', err);
       this.resetTo(LOGGED_OUT_SCREEN);
