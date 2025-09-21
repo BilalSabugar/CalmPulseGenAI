@@ -8,11 +8,11 @@
         }
       ]
     ],
-    "name": "Calm Pluse",
-    "slug": "Calm Pluse",
+    "name": "Calm Pulse",
+    "slug": "Calm Pulse",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/ca-india-logo.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"

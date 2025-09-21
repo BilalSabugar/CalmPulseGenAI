@@ -128,7 +128,7 @@ export default function WelcomeScreen() {
       {/* Header */}
       <View style={[S.rowBetween, S.headerWrap, { borderBottomColor: C.border, backgroundColor: C.headerBg, height: isDesktop ? 120 * CONTENT_SCALE : 60 * CONTENT_SCALE }]}>
         <View style={[S.row, { gap: 10 * CONTENT_SCALE }]}>
-          <Image style={[S.logoBlob, { backgroundColor: C.brandBlob }]} source={'../assets/ca-india-logo.png'} />
+          <Image style={[S.logoBlob, { backgroundColor: C.brandBlob }]} source={'../assets/logo.png'} />
           <View>
             <Text style={[S.h2, { color: C.fg }]}>Calm Pulse AI</Text>
             <Text style={[S.meta, { color: C.subtle }]}>Your private AI companion</Text>

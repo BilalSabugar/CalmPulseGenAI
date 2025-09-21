@@ -303,11 +303,15 @@ export default function Login() {
             <TextInput
               value={passcode}
               onChangeText={setPasscode}
-              placeholder="Passcode"
+              placeholder="Enter 6-digit passcode"
               placeholderTextColor={isDark ? '#8A94A7' : '#94A3B8'}
               style={styles.input}
               secureTextEntry={!showpasscode}
               autoCapitalize="none"
+              onSubmitEditing={handleLogin}
+              textContentType='password'
+              keyboardType="numeric"
+              maxLength={6}
             />
             <Pressable onPress={() => setShowpasscode(s => !s)} hitSlop={8} style={{ padding: 4 }}>
               <Ionicons
@@ -341,7 +345,7 @@ export default function Login() {
               loading && { opacity: 0.9 },
             ]}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.ctaText}>Login</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.ctaText}>Enter Calm Pulse</Text>}
           </Pressable>
           <Pressable
             onPress={() => nav.navigate('Register')}
