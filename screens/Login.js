@@ -16,6 +16,7 @@ import { Ionicons, AntDesign } from '@expo/vector-icons';
 
 import { useThemeMode } from '../components/theme/ThemeProvider';
 import { useTheme } from '../components/theme/theme';
+import userAuth from '../components/functions/userAuth';
 
 export default function Login() {
   const nav = useNavigation();
@@ -54,8 +55,8 @@ export default function Login() {
     };
 
   const [Username, setUsername] = useState('');
-  const [pw, setPw] = useState('');
-  const [showPw, setShowPw] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [showpasscode, setShowpasscode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // entrance + glow
@@ -83,14 +84,14 @@ export default function Login() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-
-      if (Username == "user" && pw == "user1234") {
-        isRemember && localStorage.setItem("isLoggedIn", "true");
-        nav.navigate('Homescreen');
-      }
-      else {
-        alert("Invalid Username or pass");
-      }
+      userAuth(Username, passcode).then((user) => user && navigation.navigate('Homescreen'))
+      // if (Username == "user" && passcode == "user1234") {
+      //   isRemember && localStorage.setItem("isLoggedIn", "true");
+      //   nav.navigate('Homescreen');
+      // }
+      // else {
+      //   alert("Invalid Username or pass");
+      // }
     }, 2000);
   };
 
@@ -291,7 +292,7 @@ export default function Login() {
             />
           </View>
 
-          {/* Password */}
+          {/* Passcode */}
           <View style={styles.inputRow}>
             <Ionicons
               name="lock-closed-outline"
@@ -300,17 +301,17 @@ export default function Login() {
               style={{ marginRight: 8 }}
             />
             <TextInput
-              value={pw}
-              onChangeText={setPw}
-              placeholder="Password"
+              value={passcode}
+              onChangeText={setPasscode}
+              placeholder="Passcode"
               placeholderTextColor={isDark ? '#8A94A7' : '#94A3B8'}
               style={styles.input}
-              secureTextEntry={!showPw}
+              secureTextEntry={!showpasscode}
               autoCapitalize="none"
             />
-            <Pressable onPress={() => setShowPw(s => !s)} hitSlop={8} style={{ padding: 4 }}>
+            <Pressable onPress={() => setShowpasscode(s => !s)} hitSlop={8} style={{ padding: 4 }}>
               <Ionicons
-                name={showPw ? 'eye-off-outline' : 'eye-outline'}
+                name={showpasscode ? 'eye-off-outline' : 'eye-outline'}
                 size={18}
                 color={isDark ? '#a8b3cf' : '#64748b'}
               />
@@ -325,7 +326,7 @@ export default function Login() {
             </View>
             <View style={styles.rowBetween}>
               <View />
-              <Pressable onPress={() => nav.navigate('ForgotPassword')}>
+              <Pressable onPress={() => alert("Forgot Password flow not implemented yet.")}>
                 <Text style={styles.link}>Forgot password?</Text>
               </Pressable>
             </View>

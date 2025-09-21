@@ -1,23 +1,3 @@
-// App.tsx — Calm Pulse Dashboard (React Native / Expo)
-// Parity with your HTML dashboard: sidebar, header, theme toggle, charts, mood picker,
-// quick tools grid, goals progress bars, week-at-a-glance with two line charts,
-// crisis CTA + modal, and floating action buttons.
-//
-// ---------- How to run ----------
-// 1) npx create-expo-app calm-pulse-dashboard
-// 2) cd calm-pulse-dashboard
-// 3) npx expo install react-native-svg
-//    npm i react-native-chart-kit lucide-react-native @react-native-async-storage/async-storage
-// 4) Replace the generated App.tsx with this file
-// 5) npx expo start
-//
-// Notes:
-// - Charts use react-native-chart-kit (LineChart + ProgressChart for the 75% donut-like meter).
-// - Icons via lucide-react-native (requires react-native-svg, which we installed above).
-// - Theme (light/dark) persisted using AsyncStorage.
-// - “md” breakpoint approximation is 1024px.
-// - On mobile, sidebar opens as a modal via the menu button.
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
@@ -55,6 +35,9 @@ import {
   AlertTriangle,
 } from "lucide-react-native";
 import { LineChart, ProgressChart } from "react-native-chart-kit";
+import isDesktop from "../components/functions/isDesktop";
+import { height } from "../components/constants";
+import { useNavigation } from "@react-navigation/native";
 
 // --- Theme ---
 type Scheme = "light" | "dark";
@@ -154,8 +137,10 @@ const FadeInUp: React.FC<{ delay?: number; children: React.ReactNode }> = ({ del
 
 export default function Homescreen() {
   const { width } = useWindowDimensions();
-  const isMd = width >= mdWidth;
+  const isMd = isDesktop;
   const { scheme, setScheme, C } = useTheme();
+
+  const navigation = useNavigation();
 
   // Sidebar modal (mobile)
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -181,7 +166,7 @@ export default function Homescreen() {
     [C, scheme]
   );
 
-  const lineWidth = Math.min(width - 48, 420);
+  const lineWidth = isDesktop ? 350 : width - 8;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
@@ -251,12 +236,12 @@ export default function Homescreen() {
             ) : (
               <View />
             )}
-            {!isMd ? <Text style={{ fontSize: 20, fontWeight: "800", color: scheme === "light" ? "#0f172a" : "#ffffff" }}>Dashboard</Text> : (
-              <Pressable style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, backgroundColor: scheme === "light" ? "#0f172a" : "#ffffff" }}>
-                <Text style={{ color: scheme === "light" ? "#ffffff" : "#0f172a", fontWeight: "800", fontSize: 13 }}>Continue Chat</Text>
-              </Pressable>
-            )}
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              {!isMd ? <Text style={{ fontSize: 20, fontWeight: "800", color: scheme === "light" ? "#0f172a" : "#ffffff" }}>Dashboard</Text> : (
+                <Pressable onPress={() => navigation.navigate('ChatScreen')} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 64, backgroundColor: scheme === "light" ? "#0f172a" : "#ffffff" }}>
+                  <Text style={{ color: scheme === "light" ? "#ffffff" : "#0f172a", fontWeight: "600", fontSize: 13 }}>Start Chat</Text>
+                </Pressable>
+              )}
               <Pressable style={{ padding: 8, borderRadius: 999 }}>
                 <Bell size={18} color={C.subtle} />
               </Pressable>
@@ -269,130 +254,149 @@ export default function Homescreen() {
             </View>
           </View>
 
+
           {/* Content */}
           <ScrollView contentContainerStyle={{ padding: isMd ? 24 : 16, gap: 24 }}>
-            <View style={{ flexDirection: "row", gap: 24, flexWrap: "wrap" }}>
-              {/* Left column */}
-              <View style={{ width: isMd ? (width - 256 - 24 * 3) * 0.66 : "100%", gap: 24 }}>
-                {/* Welcome Card */}
-                <FadeInUp delay={100}>
-                  <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 20, fontWeight: "800", color: scheme === "light" ? "#0f172a" : "#ffffff" }}>Hi SkyWalker, how are you feeling today?</Text>
-                        <Text style={{ color: C.subtle, marginTop: 4 }}>
-                          Your calm streak is <Text style={{ fontWeight: "800", color: C.indigo500 }}>7 days</Text>. Keep it going ✨
-                        </Text>
-                      </View>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-                        {/* Doughnut-like progress */}
-                        <View style={{ alignItems: "center" }}>
-                          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: scheme === "light" ? "#f1f5f9" : C.slate700, alignItems: "center", justifyContent: "center" }}>
-                            <ProgressChart
-                              data={{ data: [0.75] }}
-                              width={64}
-                              height={64}
-                              strokeWidth={8}
-                              radius={28}
-                              hideLegend
-                              chartConfig={{
-                                backgroundGradientFrom: "transparent",
-                                backgroundGradientTo: "transparent",
-                                color: () => C.indigo500,
-                              }}
-                              style={{ position: "absolute", left: 0, top: 0 }}
-                            />
-                            <Text style={{ fontWeight: "800", color: C.indigo500 }}>75%</Text>
-                          </View>
-                          <Text style={{ marginTop: 8, color: C.subtle, fontSize: 12 }}>Habit progress</Text>
+            <View style={{ flexDirection: isDesktop ? "row" : 'column', justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flexDirection: "row", gap: 24, flexWrap: "wrap" }}>
+                {/* Left column */}
+                <View style={{ width: isMd ? (width - 256 - 24 * 3) * 0.66 : "100%", gap: 24 }}>
+                  {/* Welcome Card */}
+                  <FadeInUp delay={100}>
+                    <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 20, fontWeight: "800", color: scheme === "light" ? "#0f172a" : "#ffffff" }}>Hi SkyWalker, how are you feeling today?</Text>
+                          <Text style={{ color: C.subtle, marginTop: 4 }}>
+                            Your calm streak is <Text style={{ fontWeight: "800", color: C.indigo500 }}>7 days</Text>. Keep it going ✨
+                          </Text>
                         </View>
-                        <Pressable style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, backgroundColor: C.indigo600 }}>
-                          <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>Check in now</Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+                          {/* Doughnut-like progress */}
+                          <View style={{ alignItems: "center" }}>
+                            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: scheme === "light" ? "#f1f5f9" : C.slate700, alignItems: "center", justifyContent: "center" }}>
+                              <ProgressChart
+                                data={{ data: [0.75] }}
+                                width={64}
+                                height={64}
+                                strokeWidth={8}
+                                radius={28}
+                                hideLegend
+                                chartConfig={{
+                                  backgroundGradientFrom: "transparent",
+                                  backgroundGradientTo: "transparent",
+                                  color: () => C.indigo500,
+                                }}
+                                style={{ position: "absolute", left: 0, top: 0 }}
+                              />
+                              <Text style={{ fontWeight: "800", color: C.indigo500 }}>75%</Text>
+                            </View>
+                            <Text style={{ marginTop: 8, color: C.subtle, fontSize: 12 }}>Habit progress</Text>
+                          </View>
+                          <Pressable style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, backgroundColor: C.indigo600 }}>
+                            <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>Check in now</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    </View>
+                  </FadeInUp>
+
+                  {/* Quick Mood Check */}
+                  <FadeInUp delay={200}>
+                    <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
+                      <Text style={{ fontWeight: "800", fontSize: 16, color: C.text }}>Quick Mood Check</Text>
+                      <Text style={{ color: C.subtle, fontSize: 12 }}>Tap an emoji to log your mood.</Text>
+                      <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center", marginVertical: 16 }}>
+                        {["😡", "😕", "😐", "🙂", "😁"].map((e) => {
+                          const active = mood === e;
+                          return (
+                            <Pressable key={e} onPress={() => setMood(e)} style={{ padding: 8, borderRadius: 999, transform: [{ scale: active ? 1.25 : 1 }], borderWidth: active ? 4 : 0, borderColor: active ? C.indigo500 : "transparent" }}>
+                              <Text style={{ fontSize: 32 }}>{e}</Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 24 }}>
+                        <Pressable style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                          <PlusCircle size={16} color={C.indigo500} />
+                          <Text style={{ color: C.indigo500, fontWeight: "600", fontSize: 13 }}>Add a note</Text>
+                        </Pressable>
+                        <Pressable style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                          <Lightbulb size={16} color={C.indigo500} />
+                          <Text style={{ color: C.indigo500, fontWeight: "600", fontSize: 13 }}>Suggested action</Text>
                         </Pressable>
                       </View>
                     </View>
-                  </View>
-                </FadeInUp>
+                  </FadeInUp>
 
-                {/* Quick Mood Check */}
-                <FadeInUp delay={200}>
-                  <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
-                    <Text style={{ fontWeight: "800", fontSize: 16, color: C.text }}>Quick Mood Check</Text>
-                    <Text style={{ color: C.subtle, fontSize: 12 }}>Tap an emoji to log your mood.</Text>
-                    <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center", marginVertical: 16 }}>
-                      {["😡", "😕", "😐", "🙂", "😁"].map((e) => {
-                        const active = mood === e;
-                        return (
-                          <Pressable key={e} onPress={() => setMood(e)} style={{ padding: 8, borderRadius: 999, transform: [{ scale: active ? 1.25 : 1 }], borderWidth: active ? 4 : 0, borderColor: active ? C.indigo500 : "transparent" }}>
-                            <Text style={{ fontSize: 32 }}>{e}</Text>
+                  {/* Quick Tools */}
+                  <FadeInUp delay={300}>
+                    <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
+                      <Text style={{ fontWeight: "800", fontSize: 16, color: C.text, marginBottom: 12 }}>Quick Tools</Text>
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+                        {[
+                          { bg: scheme === "light" ? "#fef2f2" : "rgba(185,28,28,0.2)", color: scheme === "light" ? "#b91c1c" : "#fecaca", icon: <Wind size={24} color={scheme === "light" ? "#b91c1c" : "#fecaca"} />, title: "1-min Breathe", sub: "Box breathing" },
+                          { bg: scheme === "light" ? "#eff6ff" : "rgba(30,64,175,0.2)", color: scheme === "light" ? "#1d4ed8" : "#93c5fd", icon: <ClipboardList size={24} color={scheme === "light" ? "#1d4ed8" : "#93c5fd"} />, title: "Mood Check", sub: "Daily reflection" },
+                          { bg: scheme === "light" ? "#f1f5f9" : C.slate700, color: C.text, icon: <MessageCircleOff size={24} color={C.text} />, title: "Vent Mode", sub: "No advice, just listen" },
+                          { bg: scheme === "light" ? "#ecfdf5" : "rgba(5,150,105,0.2)", color: scheme === "light" ? "#047857" : "#86efac", icon: <BookOpen size={24} color={scheme === "light" ? "#047857" : "#86efac"} />, title: "Journal", sub: "Prompt of the day" },
+                          { bg: scheme === "light" ? "#f5f3ff" : "rgba(109,40,217,0.2)", color: scheme === "light" ? "#6d28d9" : "#c4b5fd", icon: <BrainCircuit size={24} color={scheme === "light" ? "#6d28d9" : "#c4b5fd"} />, title: "Meditate", sub: "5-min calm" },
+                          { bg: scheme === "light" ? "#fffbeb" : "rgba(161,98,7,0.2)", color: scheme === "light" ? "#a16207" : "#fde68a", icon: <Sparkles size={24} color={scheme === "light" ? "#a16207" : "#fde68a"} />, title: "Affirm", sub: "Positive cue" },
+                        ].map((t, i) => (
+                          <View key={i} style={{ flexBasis: "48%", padding: 16, borderRadius: 12, backgroundColor: t.bg }}>
+                            <View style={{ alignItems: "center" }}>{t.icon}</View>
+                            <Text style={{ textAlign: "center", marginTop: 8, fontWeight: "700", color: t.color, fontSize: 13 }}>{t.title}</Text>
+                            <Text style={{ textAlign: "center", color: t.color, opacity: 0.7, fontSize: 11 }}>{t.sub}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  </FadeInUp>
+
+                  <View style={{ flexDirection: isDesktop ? "row" : "column", flex: 1, justifyContent: "space-between", width: "100%" }} >
+                    {/* Goals & Achievements */}
+                    <FadeInUp delay={400}>
+                      <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
+                        <Text style={{ fontWeight: "800", fontSize: 16, color: C.text, marginBottom: 12 }}>Goals & Achievements</Text>
+                        {[
+                          { label: "Sleep 7h avg", pct: 70 },
+                          { label: "Breathe 5x/week", pct: 45 },
+                          { label: "Log mood daily", pct: 80 },
+                        ].map((g, i) => (
+                          <View key={i} style={{ marginBottom: 12 }}>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
+                              <Text style={{ fontSize: 13, fontWeight: "600", color: C.subtle2 }}>{g.label}</Text>
+                              <Text style={{ fontSize: 13, fontWeight: "700", color: C.subtle }}>{g.pct}%</Text>
+                            </View>
+                            <View style={{ height: 8, borderRadius: 999, backgroundColor: scheme === "light" ? "#e5e7eb" : C.slate700 }}>
+                              <View style={{ width: `${g.pct}%`, height: 8, borderRadius: 999, backgroundColor: C.indigo500 }} />
+                            </View>
+                          </View>
+                        ))}
+                        <Pressable style={{ marginTop: 16, paddingVertical: 10, borderRadius: 10, backgroundColor: scheme === "light" ? "#f1f5f9" : C.slate700 }}>
+                          <Text style={{ textAlign: "center", fontWeight: "800", color: C.text, fontSize: 13 }}>View badges</Text>
+                        </Pressable>
+                      </View>
+                    </FadeInUp>
+                    <FadeInUp delay={300}>
+                      <View style={{ backgroundColor: scheme === "light" ? "#fef2f2" : "rgba(185,28,28,0.3)", padding: 24, borderRadius: 16 }}>
+                        <Text style={{ fontWeight: "800", fontSize: 16, color: scheme === "light" ? "#991b1b" : "#fecaca" }}>Need urgent help?</Text>
+                        <Text style={{ color: scheme === "light" ? "#b91c1c" : "#fecaca", fontSize: 12, marginTop: 4 }}>
+                          If you're in crisis, contact emergency services or a trusted helpline immediately.
+                        </Text>
+                        <View style={{ marginTop: 12, gap: 6 }}>
+                          <Pressable onPress={() => Linking.openURL("tel:112")}>
+                            <Text style={{ fontSize: 13, fontWeight: "700", color: scheme === "light" ? "#991b1b" : "#fecaca" }}>India: 112</Text>
                           </Pressable>
-                        );
-                      })}
-                    </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 24 }}>
-                      <Pressable style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <PlusCircle size={16} color={C.indigo500} />
-                        <Text style={{ color: C.indigo500, fontWeight: "600", fontSize: 13 }}>Add a note</Text>
-                      </Pressable>
-                      <Pressable style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <Lightbulb size={16} color={C.indigo500} />
-                        <Text style={{ color: C.indigo500, fontWeight: "600", fontSize: 13 }}>Suggested action</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                </FadeInUp>
-
-                {/* Quick Tools */}
-                <FadeInUp delay={300}>
-                  <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
-                    <Text style={{ fontWeight: "800", fontSize: 16, color: C.text, marginBottom: 12 }}>Quick Tools</Text>
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-                      {[
-                        { bg: scheme === "light" ? "#fef2f2" : "rgba(185,28,28,0.2)", color: scheme === "light" ? "#b91c1c" : "#fecaca", icon: <Wind size={24} color={scheme === "light" ? "#b91c1c" : "#fecaca"} />, title: "1-min Breathe", sub: "Box breathing" },
-                        { bg: scheme === "light" ? "#eff6ff" : "rgba(30,64,175,0.2)", color: scheme === "light" ? "#1d4ed8" : "#93c5fd", icon: <ClipboardList size={24} color={scheme === "light" ? "#1d4ed8" : "#93c5fd"} />, title: "Mood Check", sub: "Daily reflection" },
-                        { bg: scheme === "light" ? "#f1f5f9" : C.slate700, color: C.text, icon: <MessageCircleOff size={24} color={C.text} />, title: "Vent Mode", sub: "No advice, just listen" },
-                        { bg: scheme === "light" ? "#ecfdf5" : "rgba(5,150,105,0.2)", color: scheme === "light" ? "#047857" : "#86efac", icon: <BookOpen size={24} color={scheme === "light" ? "#047857" : "#86efac"} />, title: "Journal", sub: "Prompt of the day" },
-                        { bg: scheme === "light" ? "#f5f3ff" : "rgba(109,40,217,0.2)", color: scheme === "light" ? "#6d28d9" : "#c4b5fd", icon: <BrainCircuit size={24} color={scheme === "light" ? "#6d28d9" : "#c4b5fd"} />, title: "Meditate", sub: "5-min calm" },
-                        { bg: scheme === "light" ? "#fffbeb" : "rgba(161,98,7,0.2)", color: scheme === "light" ? "#a16207" : "#fde68a", icon: <Sparkles size={24} color={scheme === "light" ? "#a16207" : "#fde68a"} />, title: "Affirm", sub: "Positive cue" },
-                      ].map((t, i) => (
-                        <View key={i} style={{ flexBasis: "48%", padding: 16, borderRadius: 12, backgroundColor: t.bg }}>
-                          <View style={{ alignItems: "center" }}>{t.icon}</View>
-                          <Text style={{ textAlign: "center", marginTop: 8, fontWeight: "700", color: t.color, fontSize: 13 }}>{t.title}</Text>
-                          <Text style={{ textAlign: "center", color: t.color, opacity: 0.7, fontSize: 11 }}>{t.sub}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </FadeInUp>
-
-                {/* Goals & Achievements */}
-                <FadeInUp delay={400}>
-                  <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
-                    <Text style={{ fontWeight: "800", fontSize: 16, color: C.text, marginBottom: 12 }}>Goals & Achievements</Text>
-                    {[
-                      { label: "Sleep 7h avg", pct: 70 },
-                      { label: "Breathe 5x/week", pct: 45 },
-                      { label: "Log mood daily", pct: 80 },
-                    ].map((g, i) => (
-                      <View key={i} style={{ marginBottom: 12 }}>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                          <Text style={{ fontSize: 13, fontWeight: "600", color: C.subtle2 }}>{g.label}</Text>
-                          <Text style={{ fontSize: 13, fontWeight: "700", color: C.subtle }}>{g.pct}%</Text>
-                        </View>
-                        <View style={{ height: 8, borderRadius: 999, backgroundColor: scheme === "light" ? "#e5e7eb" : C.slate700 }}>
-                          <View style={{ width: `${g.pct}%`, height: 8, borderRadius: 999, backgroundColor: C.indigo500 }} />
+                          <Pressable onPress={() => Linking.openURL("tel:18005990019")}>
+                            <Text style={{ fontSize: 13, fontWeight: "700", color: scheme === "light" ? "#991b1b" : "#fecaca" }}>Kiran: 1800-599-0019</Text>
+                          </Pressable>
                         </View>
                       </View>
-                    ))}
-                    <Pressable style={{ marginTop: 16, paddingVertical: 10, borderRadius: 10, backgroundColor: scheme === "light" ? "#f1f5f9" : C.slate700 }}>
-                      <Text style={{ textAlign: "center", fontWeight: "800", color: C.text, fontSize: 13 }}>View badges</Text>
-                    </Pressable>
+                    </FadeInUp>
                   </View>
-                </FadeInUp>
-              </View>
+                </View>
 
-              {/* Right column */}
-              <View style={{ width: isMd ? (width - 256 - 24 * 3) * 0.34 : "100%", gap: 24 }}>
+
                 {/* Week at a glance */}
                 <FadeInUp delay={200}>
                   <View style={{ backgroundColor: C.card, padding: 24, borderRadius: 16, borderWidth: 1, borderColor: C.border, ...Elevate() }}>
@@ -405,14 +409,14 @@ export default function Homescreen() {
                         <Text style={{ fontSize: 13, fontWeight: "600", color: C.text }}>Mood (1-5)</Text>
                         <Text style={{ fontSize: 13, color: C.subtle }}>Latest: <Text style={{ fontWeight: "800", color: C.indigo500 }}>5</Text></Text>
                       </View>
-                      <View style={{ marginTop: 8 }}>
+                      <View style={{ marginTop: 8, paddingVertical: 10, overflow: "hidden" }}>
                         <LineChart
                           data={{
                             labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
                             datasets: [{ data: [3, 4, 3, 5, 4, 5, 5] }],
                           }}
                           width={lineWidth}
-                          height={140}
+                          height={160}
                           chartConfig={chartConfig}
                           bezier
                           withDots={false}
@@ -428,7 +432,7 @@ export default function Homescreen() {
                     </View>
 
                     {/* Sleep */}
-                    <View style={{ marginTop: 12 }}>
+                    <View style={{ marginTop: 12, overflow: "hidden" }}>
                       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <Text style={{ fontSize: 13, fontWeight: "600", color: C.text }}>Sleep (hrs)</Text>
                         <Text style={{ fontSize: 13, color: C.subtle }}>Latest: <Text style={{ fontWeight: "800", color: C.indigo500 }}>7.6</Text></Text>
@@ -440,7 +444,7 @@ export default function Homescreen() {
                             datasets: [{ data: [6.5, 7, 6, 8, 7.5, 8.2, 7.6] }],
                           }}
                           width={lineWidth}
-                          height={140}
+                          height={160}
                           chartConfig={chartConfig}
                           bezier
                           withDots={false}
@@ -463,24 +467,6 @@ export default function Homescreen() {
                         <Text style={{ fontSize: 11, color: scheme === "light" ? "#059669" : "#86efac" }}>Journal entries</Text>
                         <Text style={{ fontSize: 18, fontWeight: "800", color: scheme === "light" ? "#065f46" : "#bbf7d0" }}>40%</Text>
                       </View>
-                    </View>
-                  </View>
-                </FadeInUp>
-
-                {/* Need urgent help? */}
-                <FadeInUp delay={300}>
-                  <View style={{ backgroundColor: scheme === "light" ? "#fef2f2" : "rgba(185,28,28,0.3)", padding: 24, borderRadius: 16 }}>
-                    <Text style={{ fontWeight: "800", fontSize: 16, color: scheme === "light" ? "#991b1b" : "#fecaca" }}>Need urgent help?</Text>
-                    <Text style={{ color: scheme === "light" ? "#b91c1c" : "#fecaca", fontSize: 12, marginTop: 4 }}>
-                      If you're in crisis, contact emergency services or a trusted helpline immediately.
-                    </Text>
-                    <View style={{ marginTop: 12, gap: 6 }}>
-                      <Pressable onPress={() => Linking.openURL("tel:112")}>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: scheme === "light" ? "#991b1b" : "#fecaca" }}>India: 112</Text>
-                      </Pressable>
-                      <Pressable onPress={() => Linking.openURL("tel:18005990019")}>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: scheme === "light" ? "#991b1b" : "#fecaca" }}>Kiran: 1800-599-0019</Text>
-                      </Pressable>
                     </View>
                   </View>
                 </FadeInUp>
