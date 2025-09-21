@@ -2,6 +2,7 @@ export const users = [
   {
     "id": 0,
     "username": "admin",
+    "name": "Admin",
     "passcode": "000000",
     "age": 35,
     "gender": "N/A",
@@ -12,6 +13,7 @@ export const users = [
   {
     "id": 101,
     "username": "Rohan_S",
+    "name": "Rohan Singh",
     "passcode": "112233",
     "age": 19,
     "gender": "Male",
@@ -22,6 +24,7 @@ export const users = [
   {
     "id": 102,
     "username": "Priya_K",
+    "name": "Priya K",
     "passcode": "987654",
     "age": 28,
     "gender": "Female",
@@ -32,6 +35,7 @@ export const users = [
   {
     "id": 103,
     "username": "Aarav_J",
+    "name": "Aarav Jadav",
     "passcode": "258025",
     "age": 34,
     "gender": "Male",
@@ -42,6 +46,7 @@ export const users = [
   {
     "id": 104,
     "username": "Sunita_M",
+    "name": "Sunuta Madan",
     "passcode": "555555",
     "age": 45,
     "gender": "Female",
@@ -52,6 +57,7 @@ export const users = [
   {
     "id": 105,
     "username": "Vikram_C",
+    "name": "Vikram Chauhan",
     "passcode": "432100",
     "age": 25,
     "gender": "Male",
@@ -62,6 +68,7 @@ export const users = [
   {
     "id": 106,
     "username": "Ananya_R",
+    "name": "Ananya Raw",
     "passcode": "200211",
     "age": 22,
     "gender": "Female",
@@ -72,6 +79,7 @@ export const users = [
   {
     "id": 107,
     "username": "Kabeer_D",
+    "name": "Kabeer",
     "passcode": "770088",
     "age": 38,
     "gender": "Male",
@@ -82,6 +90,7 @@ export const users = [
   {
     "id": 108,
     "username": "Ishaan",
+    "name": "Ishaan",
     "passcode": "131313",
     "age": 20,
     "gender": "Non-binary",
@@ -92,6 +101,7 @@ export const users = [
   {
     "id": 109,
     "username": "Mr_Sharma",
+    "name": "Mohan Sharma",
     "passcode": "195867",
     "age": 67,
     "gender": "Male",
@@ -102,6 +112,7 @@ export const users = [
   {
     "id": 110,
     "username": "Dr_Fatima",
+    "name":"Fatima Kali",
     "passcode": "313131",
     "age": 31,
     "gender": "Female",
