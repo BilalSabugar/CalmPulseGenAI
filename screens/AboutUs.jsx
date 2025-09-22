@@ -149,7 +149,7 @@ const AboutUsContent = () => {
             <Text style={[styles.sectionTitle, { color: colors.heading, fontSize: isMd ? 32 : 28 }]}>Meet the Team</Text>
             <View style={styles.teamGrid}>
               <TeamMemberCard name="Sidharth Lama" role="Back-end Developer" />
-              <TeamMemberCard name="Bilal Sabugar" role="Back-end Developer" />
+              <TeamMemberCard name="Bilal Sabugar" role="Front-end Developer" />
               <TeamMemberCard name="Riyaan Sheth" role="Coordinator" />
               <TeamMemberCard name="Nandani Singh" role="Coordinator" />
             </View>
